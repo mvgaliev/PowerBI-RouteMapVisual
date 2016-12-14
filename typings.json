@@ -1,0 +1,6 @@
+{
+  "globalDependencies": {
+    "geojson": "registry:dt/geojson#0.0.0+20160619034323",
+    "jquery": "registry:dt/jquery#1.10.0+20160929162922"
+  }
+}

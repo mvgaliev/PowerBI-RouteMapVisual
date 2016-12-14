@@ -1,0 +1,29 @@
+{
+  "visual": {
+    "name": "connectionMap",
+    "displayName": "Connection Map",
+    "guid": "PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF",
+    "visualClassName": "Visual",
+    "version": "1.0.0",
+    "description": "",
+    "supportUrl": "",
+    "gitHubUrl": ""
+  },
+  "apiVersion": "1.2.0",
+  "author": {
+    "name": "",
+    "email": ""
+  },
+  "assets": {
+    "icon": "assets/icon.png"
+  },
+  "externalJS": [    
+    "node_modules/leaflet/dist/leaflet.js",
+    "external/custom-leaflet-arc-l-init.js",
+    "node_modules/jquery/dist/jquery.min.js",
+    "node_modules/leaflet-arc/bin/leaflet-arc.min.js"    
+  ],
+  "style": "style/visual.less",
+  "capabilities": "capabilities.json",
+  "dependencies": "dependencies.json"
+}

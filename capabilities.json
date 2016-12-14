@@ -1,0 +1,118 @@
+{
+    "dataRoles": [
+        {
+            "displayName": "Flight number",
+            "name": "flightNumber",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Aiport Name From",
+            "name": "nameFrom",
+            "kind": "Grouping"
+        },		
+		{
+            "displayName": "Aiport Code From",
+            "name": "codeFrom",
+            "kind": "Grouping"
+        },
+		{
+            "displayName": "Latitude From",
+            "name": "latFrom",
+            "kind": "Measure"
+        },
+		{
+            "displayName": "Longitude From",
+            "name": "longFrom",
+            "kind": "Measure"
+        },
+		{
+            "displayName": "Aiport Name To",
+            "name": "nameTo",
+            "kind": "Grouping"
+        },
+		{
+            "displayName": "Aiport Code To",
+            "name": "codeTo",
+            "kind": "Grouping"
+        },	
+		{
+            "displayName": "Latitude To",
+            "name": "latTo",
+            "kind": "Measure"
+        },
+		{
+            "displayName": "Longitude To",
+            "name": "longTo",
+            "kind": "Measure"
+        }
+    ],
+    "dataViewMappings": [
+		{
+			"conditions": [
+				{
+                    "flightNumber": {
+                        "min": 0,
+                        "max": 1
+                    },
+                    "nameFrom": {
+                        "min": 0,
+                        "max": 1
+                    },
+					"codeFrom": {
+                        "min": 0,
+                        "max": 1
+                    },
+					"latFrom": {
+                        "min": 0,
+                        "max": 1
+                    },
+					"longFrom": {
+                        "min": 0,
+                        "max": 1
+                    },
+                    "nameTo": {
+                        "min": 0,
+                        "max": 1
+                    },					
+					"codeTo": {
+                        "min": 0,
+                        "max": 1
+                    },
+					"latTo": {
+                        "min": 0,
+                        "max": 1
+                    },
+					"longTo": {
+                        "min": 0,
+                        "max": 1
+                    }
+				}
+			],
+            "categorical": {
+                "categories": {
+                    "select": [
+                        { "bind": { "to": "flightNumber" } },
+                        { "bind": { "to": "nameFrom" } },
+                        { "bind": { "to": "codeFrom" } },
+                        { "bind": { "to": "nameTo" } },
+                        { "bind": { "to": "codeTo" } }
+                    ],
+                    "dataReductionAlgorithm": {
+                        "top": {}
+                    }
+                },
+				"values": {
+                    "group": {
+                        "by": "flightNumber",
+                        "select":[
+                            { "bind": { "to": "latFrom" } },
+                            { "bind": { "to": "longFrom" } },
+                            { "bind": { "to": "latTo" } },
+                            { "bind": { "to": "longTo" } }
+                        ]
+                    }
+                }                
+			}
+        }                 					
+    ]
+}
