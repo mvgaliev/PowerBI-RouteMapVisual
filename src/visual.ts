@@ -105,17 +105,25 @@ module powerbi.extensibility.visual {
                 let fromLatLng = L.latLng(item.latitudeFrom, item.longitudeFrom),
                     toLatLng = L.latLng(item.latitudeTo, item.longitudeTo); 
                     
-                let l: any = L; 
+                let l: any = L;                 
                 
-                let markerFrom = l.marker(fromLatLng),
-                    markerTo = l.marker(toLatLng);
+                let markerFrom = l.circleMarker(fromLatLng, {
+                                    color: 'blue',
+                                    fillColor: 'blue',
+                                    radius: 4
+                                }),
+                    markerTo = l.circleMarker(toLatLng, {
+                        color: 'blue',
+                        fillColor: 'blue',
+                        radius: 4
+                    });
                     
                 this.markers.addLayer(markerFrom);
                 this.markers.addLayer(markerTo);
                 
                 let line = l.Polyline.Arc(fromLatLng, toLatLng, {
                     color: 'red',
-                    vertices: 300
+                    vertices: 250
                 });            
                 this.lines.addLayer(line);                             
             });
@@ -126,6 +134,7 @@ module powerbi.extensibility.visual {
         
         public clearMap(): void {
            this.lines.clearLayers();
+           this.markers.clearLayers();
         }
         
         public converter(dataView: DataView): ConnectionMapDataView {            
