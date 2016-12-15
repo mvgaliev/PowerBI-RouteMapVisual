@@ -35,8 +35,11 @@ module powerbi.extensibility.visual {
         private clientHeight: number;
         private map: any;
         private dataIsNotEmpty: boolean;
-        private lines: L.FeatureGroup;
-        private markers: L.FeatureGroup;
+        private lines: L.Polyline[];
+        private markers: L.Marker[];
+        private linesLayer: L.FeatureGroup;
+        private markersLayer: L.FeatureGroup;
+        private settings: ConnectionMapSettings;
 
         constructor(options: VisualConstructorOptions) {        
 			this.init(options);
@@ -47,8 +50,10 @@ module powerbi.extensibility.visual {
             this.target = options.element;
             this.clientHeight = options.element.clientHeight;
             this.clientWidth = options.element.clientWidth;
-            this.lines = L.featureGroup();
-            this.markers = L.featureGroup();
+            this.markers = [];
+            this.lines = [];
+            this.linesLayer = L.featureGroup();
+            this.markersLayer = L.featureGroup();
             
             var div = document.createElement('div');
             div.setAttribute("id", "map");
@@ -62,13 +67,20 @@ module powerbi.extensibility.visual {
         }
         
         public createMap(): void {
-            this.map = L.map('map').setView([51.4707017, -0.4608747], 14);  
+            //this.map = L.map('map').setView([51.4707017, -0.4608747], 14);  
             
-            var Esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            /*var Esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
                 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
             });
             
-            this.map.addLayer(Esri_WorldStreetMap);
+            this.map.addLayer(Esri_WorldStreetMap);*/
+            
+            this.map = L.map('map').setView([33.9415839, -118.4435494], 3); 
+  
+            //add map tile
+            var layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18 
+            }).addTo(this.map);    
         }
 
         public update(options: VisualUpdateOptions): void {
@@ -76,8 +88,8 @@ module powerbi.extensibility.visual {
             if(options.type == VisualUpdateType.Data) {
                 let dataView: DataView = options
                     && options.dataViews
-                    && options.dataViews[0];                    
-                
+                    && options.dataViews[0];  
+                                   
                 this.connectionMapDataView = this.converter(dataView);  
                 this.clearMap();              
                 this.render();
@@ -85,6 +97,10 @@ module powerbi.extensibility.visual {
             
             this.map.invalidateSize();
             this.updateContainerViewports(options.viewport);
+        }
+        
+        private parseSettings(dataView: DataView): ConnectionMapSettings {
+            return ConnectionMapSettings.parse<ConnectionMapSettings>(dataView);
         }
         
         public updateContainerViewports(viewport: IViewport) {
@@ -100,44 +116,138 @@ module powerbi.extensibility.visual {
             document.getElementById('map').style.height = viewport.height.toString() + "px";
         }
         
-        public render(): void {            
+        private setPopup(content: string, element: any) {
+            element.bindPopup(content);
+            
+            element.on("mouseover", function (e) {
+                this.openPopup();
+            });
+            element.on('mouseout', function (e) {
+                this.closePopup();
+            });            
+        }
+        
+        private setOnMarkerClickEvent(element: any) {
+            let markers = this.markers; 
+            
+            element.on('click', function (e) {
+                markers.forEach((item: any) => {
+                    item.setStyle({
+                        opacity: 0.3
+                    });
+                });
+                
+                this.setStyle({
+                    opacity: 1
+                });
+            });
+        }
+        
+        private setOnLineClickEvent(element: any) {
+            let lines = this.lines; 
+            
+            element.on('click', function (e) {
+                lines.forEach((item: any) => {
+                    item.setStyle({
+                        opacity: 0.3
+                    });
+                });
+                
+                this.setStyle({
+                    opacity: 1
+                });
+            });
+        }
+        
+       /* private createMarker(destination: Destination): any {
+            let l: any = L; 
+            
+            let fromLatLng = L.latLng(destination.latitudeFrom, destination.longitudeFrom),
+                    toLatLng = L.latLng(destination.latitudeTo, destination.longitudeTo); 
+            
+            let marker = l.circleMarker(fromLatLng, {
+                                    color: this.settings.markers.fill,
+                                    fillColor: this.settings.markers.fill,
+                                    radius: 7
+                                });                
+                    
+            marker.bindTooltip(destination.airportNameFrom, {permanent: true});                                                 
+
+    
+            this.setOnMarkerClickEvent(marker);
+            this.setPopup("Lat: " + destination.latitudeFrom + "<br>Long: " + destination.longitudeFrom, markerFrom);
+            this.markers.push(marker);marker
+            this.markersLayer.addLayer(marker);
+            addedMarkers[destination.airportNameFrom] = {};
+        }*/
+        
+        public render(): void {       
+            let addedMarkers: any = {};                 
+              
+            let lines = this.lines; 
             this.connectionMapDataView.destinations.forEach((item: Destination, index: number) => {
                 let fromLatLng = L.latLng(item.latitudeFrom, item.longitudeFrom),
                     toLatLng = L.latLng(item.latitudeTo, item.longitudeTo); 
                     
                 let l: any = L;                 
                 
-                let markerFrom = l.circleMarker(fromLatLng, {
-                                    color: 'blue',
-                                    fillColor: 'blue',
-                                    radius: 4
-                                }),
-                    markerTo = l.circleMarker(toLatLng, {
-                        color: 'blue',
-                        fillColor: 'blue',
-                        radius: 4
-                    });
+                if(!addedMarkers[item.airportNameFrom]){
+                    let markerFrom = l.circleMarker(fromLatLng, {
+                                    color: "green",
+                                    fillColor: "green",
+                                    radius: 7
+                                });                
                     
-                this.markers.addLayer(markerFrom);
-                this.markers.addLayer(markerTo);
+                    markerFrom.bindTooltip(item.airportNameFrom, {permanent: true});                                                 
+
+            
+                    this.setOnMarkerClickEvent(markerFrom);
+                    this.setPopup("Lat: " + item.latitudeFrom + "<br>Long: " + item.longitudeFrom, markerFrom);
+                    this.markers.push(markerFrom);     
+                    this.markersLayer.addLayer(markerFrom);
+                    addedMarkers[item.airportNameFrom] = {};
+                }
+                
+                if(!addedMarkers[item.airportNameTo]){
+                    let markerTo = l.circleMarker(toLatLng, {
+                                    color: "green",
+                                    fillColor: "green",
+                                    radius: 7
+                                });
+                                
+                    markerTo.bindTooltip(item.airportNameTo, {permanent: true});
+
+                    this.setOnMarkerClickEvent(markerTo);                    
+                    this.setPopup("Lat: " + item.latitudeTo + "<br>Long: " + item.longitudeTo, markerTo);  
+                    this.markers.push(markerTo);           
+                    this.markersLayer.addLayer(markerTo);
+                    addedMarkers[item.airportNameTo] = {};
+                }                                    
                 
                 let line = l.Polyline.Arc(fromLatLng, toLatLng, {
-                    color: 'red',
+                    color: "green",
                     vertices: 250
-                });            
-                this.lines.addLayer(line);                             
+                });   
+                
+                this.setPopup("Flight numbers: " + item.flightNumbers.join(", "), line);                         
+                                         
+                this.setOnLineClickEvent(line);                
+                this.lines.push(line);
+                this.linesLayer.addLayer(line);                             
             });
             
-            this.map.addLayer(this.lines);
-            this.map.addLayer(this.markers);
+            this.map.addLayer(this.linesLayer);
+            this.map.addLayer(this.markersLayer);
         }
         
         public clearMap(): void {
-           this.lines.clearLayers();
-           this.markers.clearLayers();
+           this.linesLayer.clearLayers();
+           this.markersLayer.clearLayers();
         }
         
         public converter(dataView: DataView): ConnectionMapDataView {            
+            
+            this.settings = this.parseSettings(dataView); 
             
             if (!dataView
                 || !dataView.categorical
