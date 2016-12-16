@@ -1,0 +1,9 @@
+.connection-map-direction-label {
+            background: #fff;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 12px;
+            width: auto !important;
+            white-space: nowrap;
+        }

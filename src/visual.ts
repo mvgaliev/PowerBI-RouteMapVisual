@@ -150,7 +150,7 @@ module powerbi.extensibility.visual {
 
             if (Math.abs(point.x - mapBorders.max.x) < pixelMaxOffset) {
                 // point is on the right edge
-                offsetX = -20;
+                offsetX = -50;
             }
 
             if (Math.abs(point.x - mapBorders.min.x) < pixelMaxOffset) {
@@ -227,10 +227,13 @@ module powerbi.extensibility.visual {
         private setPopup(content: string, element: any) {
             element.bindPopup(content);
             
+            let map = this.map;
             element.on("mouseover", function (e) {
+                map.dragging.disable();
                 this.openPopup();
             });
             element.on('mouseout', function (e) {
+                map.dragging.enable();
                 this.closePopup();
             });            
         }
