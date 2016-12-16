@@ -29,7 +29,8 @@ module powerbi.extensibility.visual {
         markers: ConnectionMapMarkerList,
         arcs: ConnectionMapArcList,
         arcsLayer: L.FeatureGroup,
-        markersLayer: L.FeatureGroup
+        markersLayer: L.FeatureGroup,
+        labelsLayer: L.FeatureGroup
     }
     
     export interface ConnectionMapMarkerList {
@@ -42,6 +43,7 @@ module powerbi.extensibility.visual {
     
     export interface ConnectionMapMarker {
         marker: L.CircleMarker, 
+        airportCode: string,
         arcs: L.Polyline[]
     }
     

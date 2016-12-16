@@ -32,6 +32,8 @@ module powerbi.extensibility.visual {
         private hostContainer: JQuery;     
         private map: any;
         private dataIsNotEmpty: boolean;
+        private isDataValid: boolean = false;
+
         private settings: ConnectionMapSettings;
 
         constructor(options: VisualConstructorOptions) {        
@@ -72,6 +74,19 @@ module powerbi.extensibility.visual {
             var layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 18 
             }).addTo(this.map);    
+            
+            
+            
+            this.connectionMapDataView = { 
+                markers: {}, 
+                arcs: {}, 
+                arcsLayer: L.featureGroup(), 
+                markersLayer: L.featureGroup(), 
+                labelsLayer: L.featureGroup() 
+            };
+            debugger;
+            
+            this.setMapHandlers();
         }
 
         public update(options: VisualUpdateOptions): void {
@@ -92,6 +107,108 @@ module powerbi.extensibility.visual {
         
         private parseSettings(dataView: DataView): ConnectionMapSettings {
             return ConnectionMapSettings.parse<ConnectionMapSettings>(dataView);
+        }
+        
+        // returns:
+        // 0 - marker isn't on the line
+        // 1 - marker is in the end of the line
+        // -1 - marker is at the beginning of the line
+        private isMarkerOnTheLine(coords: L.LatLng[], markerPoint: L.LatLng): number {
+            if (!coords || coords.length === 0)
+                return 0;
+
+            if (coords[0].lat.toFixed(5) === markerPoint.lat.toFixed(5) &&
+                (coords[0].lng.toFixed(5) === markerPoint.lng.toFixed(5) || ((Math.abs(+coords[0].lng.toFixed(5)) + Math.abs(+markerPoint.lng.toFixed(5)) - 360) < 2)))
+                return -1;
+            else if (coords[coords.length - 1].lat.toFixed(5) === markerPoint.lat.toFixed(5) &&
+                (coords[coords.length - 1].lng.toFixed(5) === markerPoint.lng.toFixed(5) || ((Math.abs(+coords[coords.length - 1].lat.toFixed(5)) + Math.abs(+markerPoint.lat.toFixed(5)) - 360) < 2)))
+                return 1;
+            else return 0;
+        };
+        
+        private isCoordVisible(latLng: L.LatLng): boolean {
+            let bounds = this.map.getBounds();
+            
+            return latLng && latLng.lat < bounds.getNorth() &&
+                latLng.lat > bounds.getSouth() &&
+                latLng.lng > bounds.getWest() &&
+                latLng.lng < bounds.getEast();
+        }
+        
+        private shiftPointToShowLabelCorrectly(nearestVisiblePoint: L.LatLng): L.LatLng {
+            let pixelMaxOffset = 20,
+                mapBorders = this.map.getPixelBounds(),
+                point = this.map.project(nearestVisiblePoint);
+
+            let offsetX = 0,
+                offsetY = 0;
+
+            if (Math.abs(point.y - mapBorders.min.y) < pixelMaxOffset) {
+                // point is on the top edge
+                offsetY = 10;
+            }
+
+            if (Math.abs(point.x - mapBorders.max.x) < pixelMaxOffset) {
+                // point is on the right edge
+                offsetX = -20;
+            }
+
+            if (Math.abs(point.x - mapBorders.min.x) < pixelMaxOffset) {
+                // point is on the left edge
+                offsetX = 10;
+            }
+            if (Math.abs(point.y - mapBorders.max.y) < pixelMaxOffset) {
+                // point is on the bottom edge
+                offsetY = -20;
+            }
+
+            point.x = point.x + offsetX;
+            point.y = point.y + offsetY;
+            return this.map.unproject(point);
+        }
+        
+        private createMarkerDirectionLabels(marker: L.CircleMarker, arcs: L.Polyline[], title: string): L.Marker[] {
+            let markerPoint = marker.getLatLng(),
+                isMarkerInvisible = !this.isCoordVisible(markerPoint),
+                nearestVisiblePoints: L.LatLng[] = [],
+                labelLayer: L.FeatureGroup = L.featureGroup();
+                
+            if (isMarkerInvisible) {
+                                
+                for(var item in arcs) {
+                    let arc = arcs[item],                    
+                        coords = arc.getLatLngs();                   
+                        
+                    var isMarkerOnThePolyline = this.isMarkerOnTheLine(coords, markerPoint);
+                    if (isMarkerOnThePolyline === 0)
+                        continue;
+
+                    if (isMarkerOnThePolyline === -1) {
+                        for(var index in coords) {
+                            if (this.isCoordVisible(coords[index])) {
+                                nearestVisiblePoints.push(coords[index]);
+                                break;
+                            }  
+                        }
+                    } else if (isMarkerOnThePolyline === 1) {
+                        for (var j = coords.length - 1; j >= 0; j--) {
+                            if (this.isCoordVisible(coords[j])) {
+                                nearestVisiblePoints.push(coords[j]);
+                                break;
+                            }
+                        }
+                    }                    
+                }
+            }
+            
+            let labels: L.Marker[] = [];
+            for (var i = 0; i < nearestVisiblePoints.length; i++) {
+                let nearestVisiblePoint = this.shiftPointToShowLabelCorrectly(nearestVisiblePoints[i]);
+                let label = L.divIcon({ className: 'connection-map-direction-label', html: title });
+                labels.push(L.marker(nearestVisiblePoint, { icon: label }));
+            }
+            
+            return labels;
         }
         
         public updateContainerViewports(viewport: IViewport) {
@@ -205,20 +322,23 @@ module powerbi.extensibility.visual {
         public render(): void {          
             this.map.addLayer(this.connectionMapDataView.arcsLayer);
             this.map.addLayer(this.connectionMapDataView.markersLayer);
+            this.map.addLayer(this.connectionMapDataView.labelsLayer);
         }
         
         public clearMap(): void {
-           
-           if(this.connectionMapDataView && this.connectionMapDataView.arcsLayer && this.connectionMapDataView.markersLayer) {
-               this.connectionMapDataView.arcsLayer.clearLayers();
-               this.connectionMapDataView.markersLayer.clearLayers();
+           let dataView = this.connectionMapDataView;
+           if(dataView && dataView.arcsLayer && dataView.markersLayer && dataView.labelsLayer) {
+               dataView.arcsLayer.clearLayers();
+               dataView.markersLayer.clearLayers();
+               dataView.labelsLayer.clearLayers();
            }
         }
         
         public converter(dataView: DataView): ConnectionMapDataView {            
-            
-            this.settings = this.parseSettings(dataView); 
-            
+
+            this.isDataValid = false;
+            this.settings = this.parseSettings(dataView);
+
             if (!dataView
                 || !dataView.categorical
                 || !dataView.categorical.categories
@@ -238,36 +358,37 @@ module powerbi.extensibility.visual {
                 || !dataView.categorical.values[2]
                 || !dataView.categorical.values[3]) {
 
-                return  {
+                return {
                     arcs: {},
                     arcsLayer: L.featureGroup(),
                     markers: {},
-                    markersLayer: L.featureGroup()
+                    markersLayer: L.featureGroup(),
+                    labelsLayer: L.featureGroup()
                 };
             }
 
             debugger;
-            
+
             let directions: { [key: string]: Direction } = {};
-            
+
             let codesFrom: any[] = dataView.categorical.categories[2].values,
                 codesTo: any[] = dataView.categorical.categories[4].values,
                 namesFrom: any[] = dataView.categorical.categories[1].values,
                 namesTo: any[] = dataView.categorical.categories[3].values,
                 flightNumbers: any = dataView.categorical.categories[0].values;
-                
+
             let latsFrom: any[] = dataView.categorical.values[0].values,
                 latsTo: any[] = dataView.categorical.values[2].values,
                 longsFrom: any[] = dataView.categorical.values[1].values,
                 longsTo: any[] = dataView.categorical.values[3].values;
-            
+
             codesFrom.forEach((item: any, index: number) => {
-                let codeFrom: any =  item,
+                let codeFrom: any = item,
                     codeTo: any = codesTo[index];
-                
+
                 let key = (codeFrom + codeTo) < (codeTo + codeFrom) ? (codeFrom + codeTo) : (codeTo + codeFrom);
-                
-                if(!directions[key]) {
+
+                if (!directions[key]) {
                     directions[key] = {
                         key: key,
                         airportCodeFrom: codesFrom[index],
@@ -280,69 +401,121 @@ module powerbi.extensibility.visual {
                         longitudeTo: longsTo[index],
                         flightNumbers: []
                     }
-                } 
-                
-                directions[key].flightNumbers.push(flightNumbers[index]);                        
-            });     
-            
-            let l: any = L;    
+                }
+
+                directions[key].flightNumbers.push(flightNumbers[index]);
+            });
+
+            let l: any = L;
             let arcs: ConnectionMapArcList = {},
                 markers: ConnectionMapMarkerList = {};
-                
+
             let markersLayer: L.FeatureGroup = L.featureGroup(),
-                arcsLayer: L.FeatureGroup = L.featureGroup(); 
-                        
-            for(var item in directions) {
+                arcsLayer: L.FeatureGroup = L.featureGroup(),
+                labelsLayer: L.FeatureGroup = L.featureGroup();
+
+            for (var item in directions) {
                 let direction = directions[item];
-                
+
                 let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom),
-                    toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo); 
-                                    
+                    toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo);
+
                 let keyArc = direction.key,
                     keyFrom = direction.airportCodeFrom,
-                    keyTo = direction.airportCodeTo;                                                             
-                
-                if(!arcs[keyArc]) {
+                    keyTo = direction.airportCodeTo;
+
+                if (!arcs[keyArc]) {
                     let arc = l.Polyline.Arc(fromLatLng, toLatLng, {
                         color: "red",
                         vertices: 250
-                    });   
-                    
-                    this.setPopup("Flight numbers: " + direction.flightNumbers.join(", "), arc);                         
-                                            
-                    this.setOnArcClickEvent(arc);                
+                    });
+
+                    this.setPopup("Flight numbers: " + direction.flightNumbers.join(", "), arc);
+
+                    this.setOnArcClickEvent(arc);
                     arcs[keyArc] = { arc: arc, markers: [] };
-                    arcsLayer.addLayer(arc);  
-                    
-                    if(!markers[keyFrom]){
+                    arcsLayer.addLayer(arc);
+
+                    if (!markers[keyFrom]) {
                         let popupMessage = "Lat: " + direction.latitudeFrom + "<br>Long: " + direction.longitudeFrom;
                         let markerFrom = this.createClickableMarkerWithLabelAndPopup(fromLatLng, popupMessage, direction.airportNameFrom);
-                        
-                        markers[keyFrom] = { marker: markerFrom, arcs: [] };     
-                        markersLayer.addLayer(markerFrom);                        
-                    } 
-                    
-                    if(!markers[keyTo]){
+
+                        markers[keyFrom] = { marker: markerFrom, arcs: [], airportCode: direction.airportCodeFrom };
+                        markersLayer.addLayer(markerFrom);
+                    }
+
+                    if (!markers[keyTo]) {
                         let popupMessage = "Lat: " + direction.latitudeTo + "<br>Long: " + direction.longitudeTo;
                         let markerTo = this.createClickableMarkerWithLabelAndPopup(toLatLng, popupMessage, direction.airportNameTo);
-                        
-                        markers[keyTo] = { marker: markerTo, arcs: [] };   
-                        markersLayer.addLayer(markerTo);                        
-                    }   
-                    
+
+                        markers[keyTo] = { marker: markerTo, arcs: [], airportCode: direction.airportCodeTo };
+                        markersLayer.addLayer(markerTo);
+                    }
+
                     markers[keyFrom].arcs.push(arc);
                     markers[keyTo].arcs.push(arc);
                     arcs[keyArc].markers.push(markers[keyFrom].marker);
                     arcs[keyArc].markers.push(markers[keyTo].marker);
                 }
-            }  
-            
-            return { 
+            }
+
+            for (var item in markers) {
+                let marker: L.CircleMarker = markers[item].marker,
+                    arcs: L.Polyline[] = markers[item].arcs,
+                    airport: string = markers[item].airportCode;
+
+                let outOfBorderLabels = this.createMarkerDirectionLabels(marker, arcs, airport);
+
+                outOfBorderLabels.forEach((item) => {
+                    labelsLayer.addLayer(item);
+                });
+            }
+
+            this.isDataValid = true;
+            return {
                 arcs: arcs,
                 markers: markers,
                 markersLayer: markersLayer,
-                arcsLayer: arcsLayer
+                arcsLayer: arcsLayer,
+                labelsLayer: labelsLayer
             };    
+        }
+        
+        private handleMove(): void {
+            if(!this.isDataValid) {
+                return;
+            }
+            
+            let markers = this.connectionMapDataView.markers;
+            let labelsLayer = this.connectionMapDataView.labelsLayer;
+            let outOfBorderLabels: L.Marker[] = []; 
+            
+            for(var item in markers) {
+                let marker = markers[item];
+                let newLabels = this.createMarkerDirectionLabels(marker.marker, marker.arcs, marker.airportCode);
+                
+                newLabels.forEach((item) => {
+                    outOfBorderLabels.push(item);
+                });        
+            }
+            
+            labelsLayer.clearLayers();
+            
+            outOfBorderLabels.forEach((item) => {
+                labelsLayer.addLayer(item);
+            });
+        }
+        
+        private setMapHandlers(): void {
+            let me = this;
+            
+            this.map.on('zoom', function (e) {
+                me.handleMove();
+            });
+            
+            this.map.on('moveend', function (e) {
+                me.handleMove();
+            });
         }
     }
 }
