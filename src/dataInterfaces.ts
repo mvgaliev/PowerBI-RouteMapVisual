@@ -26,7 +26,28 @@
 
 module powerbi.extensibility.visual {
     export interface ConnectionMapDataView {
-        destinations: Destination[]
+        markers: ConnectionMapMarkerList,
+        arcs: ConnectionMapArcList,
+        arcsLayer: L.FeatureGroup,
+        markersLayer: L.FeatureGroup
+    }
+    
+    export interface ConnectionMapMarkerList {
+        [key: string]: ConnectionMapMarker;
+    }
+    
+    export interface ConnectionMapArcList {
+        [key: string]: ConnectionMapArc;
+    }
+    
+    export interface ConnectionMapMarker {
+        marker: L.CircleMarker, 
+        arcs: L.Polyline[]
+    }
+    
+    export interface ConnectionMapArc {
+        arc: L.Polyline, 
+        markers: L.CircleMarker[]
     }
     
     export interface ConnectionMapAirport {
@@ -41,8 +62,10 @@ module powerbi.extensibility.visual {
         airportTo: ConnectionMapAirport
     }
     
-    export interface Destination {
+    export interface Direction {
         key: string,
+        airportCodeFrom: string,
+        airportCodeTo: string,
         airportNameFrom: string,
         latitudeFrom: number,
         longitudeFrom: number,

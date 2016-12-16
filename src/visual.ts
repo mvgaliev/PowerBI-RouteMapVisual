@@ -28,17 +28,10 @@ module powerbi.extensibility.visual {
     export class Visual implements IVisual {
         
         private connectionMapDataView: ConnectionMapDataView;
-        private target: HTMLElement;
-        private element: HTMLElement;
+        private targetHtmlElement: HTMLElement;
         private hostContainer: JQuery;     
-        private clientWidth: number;
-        private clientHeight: number;
         private map: any;
         private dataIsNotEmpty: boolean;
-        private lines: L.Polyline[];
-        private markers: L.Marker[];
-        private linesLayer: L.FeatureGroup;
-        private markersLayer: L.FeatureGroup;
         private settings: ConnectionMapSettings;
 
         constructor(options: VisualConstructorOptions) {        
@@ -46,27 +39,25 @@ module powerbi.extensibility.visual {
         }
 		
 		public init(options: VisualConstructorOptions): void {
-			// add LeafletJS map DIV tag
-            this.target = options.element;
-            this.clientHeight = options.element.clientHeight;
-            this.clientWidth = options.element.clientWidth;
-            this.markers = [];
-            this.lines = [];
-            this.linesLayer = L.featureGroup();
-            this.markersLayer = L.featureGroup();
-            
+
+            this.targetHtmlElement = options.element;
+
+            this.addMapDivToDocument();			
+
+			this.hostContainer = $(this.targetHtmlElement).css('overflow-x', 'hidden');
+            this.initMap();
+        }
+        
+        private addMapDivToDocument(): void {
             var div = document.createElement('div');
             div.setAttribute("id", "map");
             div.setAttribute("style", "height:550px");
             div.setAttribute("class", "none");
-
-			this.target.appendChild(div);
-
-			this.hostContainer = $(this.target).css('overflow-x', 'hidden');
-            this.createMap();
+            
+            this.targetHtmlElement.appendChild(div);
         }
         
-        public createMap(): void {
+        public initMap(): void {
             //this.map = L.map('map').setView([51.4707017, -0.4608747], 14);  
             
             /*var Esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -84,14 +75,14 @@ module powerbi.extensibility.visual {
         }
 
         public update(options: VisualUpdateOptions): void {
-            // handle resize              
+            // render new data if dataset was changed
             if(options.type == VisualUpdateType.Data) {
                 let dataView: DataView = options
                     && options.dataViews
                     && options.dataViews[0];  
-                                   
-                this.connectionMapDataView = this.converter(dataView);  
-                this.clearMap();              
+                
+                this.clearMap();                    
+                this.connectionMapDataView = this.converter(dataView);                          
                 this.render();
             }
             
@@ -127,122 +118,101 @@ module powerbi.extensibility.visual {
             });            
         }
         
-        private setOnMarkerClickEvent(element: any) {
-            let markers = this.markers; 
+        private setOnMarkerClickEvent(element: L.CircleMarker) {
+            let me = this;             
             
             element.on('click', function (e) {
-                markers.forEach((item: any) => {
-                    item.setStyle({
-                        opacity: 0.3
-                    });
-                });
-                
+                let markers = me.connectionMapDataView.markers; 
+                let arcs =  me.connectionMapDataView.arcs;
+            
                 this.setStyle({
                     opacity: 1
                 });
-            });
-        }
-        
-        private setOnLineClickEvent(element: any) {
-            let lines = this.lines; 
-            
-            element.on('click', function (e) {
-                lines.forEach((item: any) => {
-                    item.setStyle({
+                
+                for(var item in arcs) {
+                    arcs[item].arc.setStyle({
                         opacity: 0.3
                     });
-                });
+                }                
                 
-                this.setStyle({
-                    opacity: 1
-                });
+                for(var item in markers) {
+                    if(markers[item].marker !== this) {
+                        markers[item].marker.setStyle({
+                            opacity: 0.3
+                        });                                        
+                    } else {
+                        markers[item].arcs.forEach((item: L.Polyline) => {
+                            item.setStyle({
+                               opacity: 1 
+                            });
+                        });
+                    }                    
+                }             
             });
         }
         
-       /* private createMarker(destination: Destination): any {
-            let l: any = L; 
+        private setOnArcClickEvent(element: L.Polyline) { 
+            let me = this;  
             
-            let fromLatLng = L.latLng(destination.latitudeFrom, destination.longitudeFrom),
-                    toLatLng = L.latLng(destination.latitudeTo, destination.longitudeTo); 
-            
-            let marker = l.circleMarker(fromLatLng, {
-                                    color: this.settings.markers.fill,
-                                    fillColor: this.settings.markers.fill,
-                                    radius: 7
-                                });                
+            element.on('click', function (e) {
+                let markers = me.connectionMapDataView.markers; 
+                let arcs = me.connectionMapDataView.arcs;
+                
+                for(var item in markers) {
+                    markers[item].marker.setStyle({
+                        opacity: 0.3
+                    });
+                }  
+                
+                for(var item in arcs) {
+                    if(arcs[item].arc !== this) {
+                        arcs[item].arc.setStyle({
+                            opacity: 0.3
+                        });
+                    } else {
+                        let arc = arcs[item];
+                        
+                        arc.arc.setStyle({
+                            opacity: 1
+                        });
+                        
+                        arc.markers.forEach((item: L.CircleMarker) => {
+                            item.setStyle({
+                               opacity: 1 
+                            });
+                        });  
+                    }                    
+                }  
+            });
+        }
+        
+        private createClickableMarkerWithLabelAndPopup(latLng: L.LatLng, popupMessage: string, label: string): L.CircleMarker {
+           
+            let marker = L.circleMarker(latLng, {
+                color: this.settings.markers.fill,
+                fillColor: this.settings.markers.fill,
+                radius: 7
+            });                
                     
-            marker.bindTooltip(destination.airportNameFrom, {permanent: true});                                                 
-
+            marker.bindTooltip(label, { permanent: true });                                                
     
             this.setOnMarkerClickEvent(marker);
-            this.setPopup("Lat: " + destination.latitudeFrom + "<br>Long: " + destination.longitudeFrom, markerFrom);
-            this.markers.push(marker);marker
-            this.markersLayer.addLayer(marker);
-            addedMarkers[destination.airportNameFrom] = {};
-        }*/
+            this.setPopup("Lat: " + latLng.lat + "<br>Long: " + latLng.lng, marker);            
+            
+            return marker;
+        }            
         
-        public render(): void {       
-            let addedMarkers: any = {};                 
-              
-            let lines = this.lines; 
-            this.connectionMapDataView.destinations.forEach((item: Destination, index: number) => {
-                let fromLatLng = L.latLng(item.latitudeFrom, item.longitudeFrom),
-                    toLatLng = L.latLng(item.latitudeTo, item.longitudeTo); 
-                    
-                let l: any = L;                 
-                
-                if(!addedMarkers[item.airportNameFrom]){
-                    let markerFrom = l.circleMarker(fromLatLng, {
-                                    color: "green",
-                                    fillColor: "green",
-                                    radius: 7
-                                });                
-                    
-                    markerFrom.bindTooltip(item.airportNameFrom, {permanent: true});                                                 
-
-            
-                    this.setOnMarkerClickEvent(markerFrom);
-                    this.setPopup("Lat: " + item.latitudeFrom + "<br>Long: " + item.longitudeFrom, markerFrom);
-                    this.markers.push(markerFrom);     
-                    this.markersLayer.addLayer(markerFrom);
-                    addedMarkers[item.airportNameFrom] = {};
-                }
-                
-                if(!addedMarkers[item.airportNameTo]){
-                    let markerTo = l.circleMarker(toLatLng, {
-                                    color: "green",
-                                    fillColor: "green",
-                                    radius: 7
-                                });
-                                
-                    markerTo.bindTooltip(item.airportNameTo, {permanent: true});
-
-                    this.setOnMarkerClickEvent(markerTo);                    
-                    this.setPopup("Lat: " + item.latitudeTo + "<br>Long: " + item.longitudeTo, markerTo);  
-                    this.markers.push(markerTo);           
-                    this.markersLayer.addLayer(markerTo);
-                    addedMarkers[item.airportNameTo] = {};
-                }                                    
-                
-                let line = l.Polyline.Arc(fromLatLng, toLatLng, {
-                    color: "green",
-                    vertices: 250
-                });   
-                
-                this.setPopup("Flight numbers: " + item.flightNumbers.join(", "), line);                         
-                                         
-                this.setOnLineClickEvent(line);                
-                this.lines.push(line);
-                this.linesLayer.addLayer(line);                             
-            });
-            
-            this.map.addLayer(this.linesLayer);
-            this.map.addLayer(this.markersLayer);
+        public render(): void {          
+            this.map.addLayer(this.connectionMapDataView.arcsLayer);
+            this.map.addLayer(this.connectionMapDataView.markersLayer);
         }
         
         public clearMap(): void {
-           this.linesLayer.clearLayers();
-           this.markersLayer.clearLayers();
+           
+           if(this.connectionMapDataView && this.connectionMapDataView.arcsLayer && this.connectionMapDataView.markersLayer) {
+               this.connectionMapDataView.arcsLayer.clearLayers();
+               this.connectionMapDataView.markersLayer.clearLayers();
+           }
         }
         
         public converter(dataView: DataView): ConnectionMapDataView {            
@@ -268,14 +238,17 @@ module powerbi.extensibility.visual {
                 || !dataView.categorical.values[2]
                 || !dataView.categorical.values[3]) {
 
-                return {
-                    destinations: []
+                return  {
+                    arcs: {},
+                    arcsLayer: L.featureGroup(),
+                    markers: {},
+                    markersLayer: L.featureGroup()
                 };
             }
 
             debugger;
             
-            let destinationsPreData: any = {};
+            let directions: { [key: string]: Direction } = {};
             
             let codesFrom: any[] = dataView.categorical.categories[2].values,
                 codesTo: any[] = dataView.categorical.categories[4].values,
@@ -294,9 +267,11 @@ module powerbi.extensibility.visual {
                 
                 let key = (codeFrom + codeTo) < (codeTo + codeFrom) ? (codeFrom + codeTo) : (codeTo + codeFrom);
                 
-                if(!destinationsPreData[key]) {
-                    destinationsPreData[key] = {
+                if(!directions[key]) {
+                    directions[key] = {
                         key: key,
+                        airportCodeFrom: codesFrom[index],
+                        airportCodeTo: codesTo[index],
                         airportNameFrom: namesFrom[index],
                         latitudeFrom: latsFrom[index],
                         longitudeFrom: longsFrom[index],
@@ -307,18 +282,67 @@ module powerbi.extensibility.visual {
                     }
                 } 
                 
-                destinationsPreData[key].flightNumbers.push(flightNumbers[index]);                        
-            });    
+                directions[key].flightNumbers.push(flightNumbers[index]);                        
+            });     
             
-            let destinations: Destination[] = []; 
-            
-            for(let key in destinationsPreData) {
-                if (destinationsPreData.hasOwnProperty(key)) {
-                    destinations.push(destinationsPreData[key]);
+            let l: any = L;    
+            let arcs: ConnectionMapArcList = {},
+                markers: ConnectionMapMarkerList = {};
+                
+            let markersLayer: L.FeatureGroup = L.featureGroup(),
+                arcsLayer: L.FeatureGroup = L.featureGroup(); 
+                        
+            for(var item in directions) {
+                let direction = directions[item];
+                
+                let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom),
+                    toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo); 
+                                    
+                let keyArc = direction.key,
+                    keyFrom = direction.airportCodeFrom,
+                    keyTo = direction.airportCodeTo;                                                             
+                
+                if(!arcs[keyArc]) {
+                    let arc = l.Polyline.Arc(fromLatLng, toLatLng, {
+                        color: "red",
+                        vertices: 250
+                    });   
+                    
+                    this.setPopup("Flight numbers: " + direction.flightNumbers.join(", "), arc);                         
+                                            
+                    this.setOnArcClickEvent(arc);                
+                    arcs[keyArc] = { arc: arc, markers: [] };
+                    arcsLayer.addLayer(arc);  
+                    
+                    if(!markers[keyFrom]){
+                        let popupMessage = "Lat: " + direction.latitudeFrom + "<br>Long: " + direction.longitudeFrom;
+                        let markerFrom = this.createClickableMarkerWithLabelAndPopup(fromLatLng, popupMessage, direction.airportNameFrom);
+                        
+                        markers[keyFrom] = { marker: markerFrom, arcs: [] };     
+                        markersLayer.addLayer(markerFrom);                        
+                    } 
+                    
+                    if(!markers[keyTo]){
+                        let popupMessage = "Lat: " + direction.latitudeTo + "<br>Long: " + direction.longitudeTo;
+                        let markerTo = this.createClickableMarkerWithLabelAndPopup(toLatLng, popupMessage, direction.airportNameTo);
+                        
+                        markers[keyTo] = { marker: markerTo, arcs: [] };   
+                        markersLayer.addLayer(markerTo);                        
+                    }   
+                    
+                    markers[keyFrom].arcs.push(arc);
+                    markers[keyTo].arcs.push(arc);
+                    arcs[keyArc].markers.push(markers[keyFrom].marker);
+                    arcs[keyArc].markers.push(markers[keyTo].marker);
                 }
-            }       
+            }  
             
-            return { destinations };    
+            return { 
+                arcs: arcs,
+                markers: markers,
+                markersLayer: markersLayer,
+                arcsLayer: arcsLayer
+            };    
         }
     }
 }
