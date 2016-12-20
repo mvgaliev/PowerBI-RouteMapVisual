@@ -28,15 +28,23 @@ module powerbi.extensibility.visual {
     import DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
 
     export class ConnectionMapMarkerSettings {
-        public fill: string = "blue";
-    }
-
-    export class ConnectionMapLineSettings {
         public fill: string = "red";
     }
 
+    export class ConnectionMapRoutesSettings {
+        private arcColor: { solid: { color: string } } = { solid: { color: "red"} };
+        public showOutOfMapMarkerLabels: boolean = true;
+        
+        public getColor() {
+            return this.arcColor.solid.color;
+        }
+        
+        public setColor(value: string) {
+            this.arcColor.solid.color = value;
+        }
+    }
+
     export class ConnectionMapSettings extends DataViewObjectsParser {
-        public markers: ConnectionMapMarkerSettings = new ConnectionMapMarkerSettings();
-        public lines: ConnectionMapLineSettings = new ConnectionMapLineSettings();
+        public routes: ConnectionMapRoutesSettings = new ConnectionMapRoutesSettings();
     }
 }

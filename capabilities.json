@@ -114,5 +114,28 @@
                 }                
 			}
         }                 					
-    ]
+    ],
+    "objects": {
+        "routes": {
+            "displayName": "Routes",
+            "properties": {
+                "arcColor": {
+                    "displayName": "Arc color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "showOutOfMapMarkerLabels": {
+                    "displayName": "Show name of airport out of screen",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        }        
+    }
 }
