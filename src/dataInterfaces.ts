@@ -44,12 +44,15 @@ module powerbi.extensibility.visual {
     export interface ConnectionMapMarker {
         marker: L.CircleMarker, 
         airportCode: string,
-        arcs: L.Polyline[]
+        arcs: ConnectionMapArc[],
+        isSelected: boolean
     }
     
     export interface ConnectionMapArc {
         arc: L.Polyline, 
-        markers: L.CircleMarker[]
+        markers: ConnectionMapMarker[],
+        isSelected: boolean,
+        selectionId: ISelectionId
     }
     
     export interface ConnectionMapAirport {
@@ -58,22 +61,14 @@ module powerbi.extensibility.visual {
         longitude: number
     }
     
-    export interface ConnectionMapFlight {
-        flightNumber: string,
-        airportFrom: ConnectionMapAirport, 
-        airportTo: ConnectionMapAirport
-    }
-    
     export interface Direction {
-        key: string,
+        market: string,
+        index: number,
         airportCodeFrom: string,
         airportCodeTo: string,
-        airportNameFrom: string,
         latitudeFrom: number,
         longitudeFrom: number,
-        airportNameTo: string,
         latitudeTo: number,
-        longitudeTo: number,
-        flightNumbers: string[]
+        longitudeTo: number        
     }
 }

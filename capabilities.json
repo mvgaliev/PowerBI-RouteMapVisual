@@ -1,15 +1,10 @@
 {
     "dataRoles": [
         {
-            "displayName": "Flight number",
-            "name": "flightNumber",
+            "displayName": "Market",
+            "name": "market",
             "kind": "Grouping"
-        },
-        {
-            "displayName": "Aiport Name From",
-            "name": "nameFrom",
-            "kind": "Grouping"
-        },		
+        },	
 		{
             "displayName": "Aiport Code From",
             "name": "codeFrom",
@@ -24,11 +19,6 @@
             "displayName": "Longitude From",
             "name": "longFrom",
             "kind": "Measure"
-        },
-		{
-            "displayName": "Aiport Name To",
-            "name": "nameTo",
-            "kind": "Grouping"
         },
 		{
             "displayName": "Aiport Code To",
@@ -50,11 +40,7 @@
 		{
 			"conditions": [
 				{
-                    "flightNumber": {
-                        "min": 0,
-                        "max": 1
-                    },
-                    "nameFrom": {
+                    "market": {
                         "min": 0,
                         "max": 1
                     },
@@ -67,10 +53,6 @@
                         "max": 1
                     },
 					"longFrom": {
-                        "min": 0,
-                        "max": 1
-                    },
-                    "nameTo": {
                         "min": 0,
                         "max": 1
                     },					
@@ -91,10 +73,8 @@
             "categorical": {
                 "categories": {
                     "select": [
-                        { "bind": { "to": "flightNumber" } },
-                        { "bind": { "to": "nameFrom" } },
+                        { "bind": { "to": "market" } },
                         { "bind": { "to": "codeFrom" } },
-                        { "bind": { "to": "nameTo" } },
                         { "bind": { "to": "codeTo" } }
                     ],
                     "dataReductionAlgorithm": {
@@ -103,7 +83,7 @@
                 },
 				"values": {
                     "group": {
-                        "by": "flightNumber",
+                        "by": "codeTo",
                         "select":[
                             { "bind": { "to": "latFrom" } },
                             { "bind": { "to": "longFrom" } },
@@ -130,7 +110,7 @@
                     }
                 },
                 "showOutOfMapMarkerLabels": {
-                    "displayName": "Show name of airport out of screen",
+                    "displayName": "Show out map border labels",
                     "type": {
                         "bool": true
                     }
