@@ -276,15 +276,13 @@ module powerbi.extensibility.visual {
         }
 
         private setPopupToElement(content: string, element: any): void {
-            element.bindPopup(content);
+            element.bindPopup(content, { autoPan: false });
 
             let map = this.map;
             element.on("mouseover", function (e) {
-                map.dragging.disable();
-                this.openPopup();
+                this.openPopup(this, e.latlng);
             });
             element.on('mouseout', function (e) {
-                map.dragging.enable();
                 this.closePopup();
             });
         }
@@ -335,11 +333,17 @@ module powerbi.extensibility.visual {
                     }
                 } 
                 
-                connectionMapMarker.arcs.map((value) => {
-                    arcSelectionIds.push(value.selectionId);
-                });
-
                 let isMultipleSelection = (e as L.MouseEvent).originalEvent.ctrlKey;
+                
+                if(!connectionMapMarker || (connectionMapMarker.isSelected && !isMultipleSelection)) {
+                    return;
+                }
+                
+                connectionMapMarker.arcs.map((value) => {
+                    if(!connectionMapMarker.isSelected || value.isSelected) {
+                        arcSelectionIds.push(value.selectionId);
+                    }
+                });
                 
                 me.selectionManager.select(arcSelectionIds, isMultipleSelection).then((ids: ISelectionId[]) => {                    
                     
@@ -357,14 +361,21 @@ module powerbi.extensibility.visual {
                         }                        
                     }  
                     
-                    connectionMapMarker.isSelected = true;
-                    me.setSelectionStyle(true, connectionMapMarker.marker);
+                    connectionMapMarker.isSelected = !connectionMapMarker.isSelected;
+                    me.setSelectionStyle(connectionMapMarker.isSelected, connectionMapMarker.marker);
                     
                     connectionMapMarker.arcs.forEach((item) => {
-                        if(!item.isSelected) {
-                            item.isSelected = true;
-                            me.setSelectionStyle(true, item.arc);
-                        }                                              
+                        if (item.isSelected !== connectionMapMarker.isSelected) {
+                            item.isSelected = connectionMapMarker.isSelected;
+                            me.setSelectionStyle(item.isSelected, item.arc);
+                            
+                            item.markers.forEach((marker) => {
+                                if (marker !== connectionMapMarker) {
+                                    marker.isSelected = connectionMapMarker.isSelected;
+                                    me.setSelectionStyle(marker.isSelected, marker.marker);
+                                }
+                            });
+                        }                                                                 
                     });
                 });                        
             });
@@ -387,14 +398,14 @@ module powerbi.extensibility.visual {
                     }
                 }                
                 
-                if(!connectionMapArc || connectionMapArc.isSelected) {
+                let isMultipleSelection = (e as L.MouseEvent).originalEvent.ctrlKey;
+                
+                if(!connectionMapArc || (connectionMapArc.isSelected && !isMultipleSelection)) {
                     return;
                 }
                 
-                let selectedId: ISelectionId = connectionMapArc.selectionId;
-                
-                let isMultipleSelection = (e as L.MouseEvent).originalEvent.ctrlKey;
-                
+                let selectedId: ISelectionId = connectionMapArc.selectionId;              
+                           
                 me.selectionManager.select(selectedId, isMultipleSelection).then((ids: ISelectionId[]) => {
                     
                     if(!isMultipleSelection) {
@@ -411,14 +422,23 @@ module powerbi.extensibility.visual {
                         }
                     }       
                     
-                    connectionMapArc.isSelected = true;
-                    me.setSelectionStyle(true, connectionMapArc.arc);
+                    connectionMapArc.isSelected = !connectionMapArc.isSelected;
+                    me.setSelectionStyle(connectionMapArc.isSelected, connectionMapArc.arc);
 
-                    connectionMapArc.markers.forEach((item: ConnectionMapMarker) => {                        
-                        if(!item.isSelected) {
-                            item.isSelected = true;
-                            me.setSelectionStyle(true, item.marker);
+                    connectionMapArc.markers.forEach((item: ConnectionMapMarker) => {  
+                        let markerGotSelectedElements = false;
+                        
+                        for(var i in item.arcs) {
+                            if(item.arcs[i].isSelected == true) {
+                                markerGotSelectedElements = true;
+                                break;
+                            }
                         }
+                        
+                        if(markerGotSelectedElements !== item.isSelected) {                      
+                            item.isSelected = !item.isSelected;                          
+                            me.setSelectionStyle(item.isSelected, item.marker);
+                        }                       
                     });       
                 });
             });
@@ -663,6 +683,13 @@ module powerbi.extensibility.visual {
             });
 
             this.map.on('click', function (e) {
+                
+                let multipleSelection = (e as L.MouseEvent).originalEvent.ctrlKey;
+                
+                if(multipleSelection) {
+                    return;
+                }
+                
                 if (me.mapGotActiveSelections()) {
                     me.selectionManager.clear().then(() => {
                         me.unselectAll();
