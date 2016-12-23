@@ -482,6 +482,105 @@ module powerbi.extensibility.visual {
                 dataView.labelsLayer.clearLayers();
             }
         }
+        
+        private parseDataViewToDirections(dataView: DataView): Direction[] {
+            let directions: Direction[] = [];
+
+            let marketCategory = dataView.categorical.categories[0];
+            let codesFrom: any[] = dataView.categorical.categories[1].values,
+                codesTo: any[] = dataView.categorical.categories[2].values,
+                markets: any[] = dataView.categorical.categories[0].values;
+
+            let latsFrom: any[] = dataView.categorical.values[0].values,
+                latsTo: any[] = dataView.categorical.values[2].values,
+                longsFrom: any[] = dataView.categorical.values[1].values,
+                longsTo: any[] = dataView.categorical.values[3].values;           
+                
+            let tooltipColumns: DataViewValueColumn[] = [];
+            
+            for(var i in dataView.categorical.values) {
+                let column = dataView.categorical.values[i];
+                if(column.source && column.source.roles["tooltips"]) {
+                    tooltipColumns.push(column);
+                }
+            }    
+            
+            let tooltips: string[] = [];
+            
+            if(tooltipColumns.length > 0) {
+                for(var k = 0; k < tooltipColumns[0].values.length; ++k) {
+                    let tooltip: string = tooltipColumns[0].source.displayName + ": " + tooltipColumns[0].values[k];
+                    
+                    for(var j = 1; j < tooltipColumns.length; ++j) {
+                        tooltip += "<br>" + tooltipColumns[j].source.displayName  + ": " + tooltipColumns[j].values[k];
+                    }
+                    
+                    tooltips.push(tooltip);
+                }
+            }      
+
+            markets.forEach((item: any, index: number) => {                
+                directions.push({
+                    market: markets[index],
+                    index: index,
+                    airportCodeFrom: codesFrom[index],
+                    airportCodeTo: codesTo[index],
+                    latitudeFrom: latsFrom[index],
+                    longitudeFrom: longsFrom[index],
+                    latitudeTo: latsTo[index],
+                    longitudeTo: longsTo[index],
+                    tooltip: tooltips[index]
+                });
+            });
+            
+            return directions;
+        }
+        
+        private createConnectionMapArc(direction: Direction, 
+                                       settings: ConnectionMapSettings, 
+                                       selectionCategoryColumn: DataViewCategoricalColumn): ConnectionMapArc {
+                                           
+            let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom),
+                toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo);            
+
+            let airportCodeFrom = direction.airportCodeFrom,
+                airportCodeTo = direction.airportCodeTo;
+
+            let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
+
+            this.setPopupToElement(direction.tooltip, arc);
+            this.setOnArcClickEvent(arc);
+
+            let selectionId = this.host.createSelectionIdBuilder()
+                .withCategory(selectionCategoryColumn, direction.index)
+                .createSelectionId();
+
+            return {
+                arc: arc,
+                markers: [],
+                isSelected: false,
+                selectionId: selectionId
+            };
+        }
+        
+        private createConnectionMapMarker(direction: Direction, latLng: L.LatLng, settings: ConnectionMapSettings): ConnectionMapMarker {                
+            
+            let markerFrom = this.createCustomizableMarker(latLng, settings);
+
+            let label = direction.airportCodeFrom;
+            this.setLabelToElement(label, markerFrom);
+
+            let popupMessage = "Lat: " + direction.latitudeFrom + "<br>Long: " + direction.longitudeFrom;
+            this.setPopupToElement(popupMessage, markerFrom);
+            this.setOnMarkerClickEvent(markerFrom);
+
+            return {
+                marker: markerFrom,
+                arcs: [], 
+                airportCode: direction.airportCodeFrom,
+                isSelected: false
+            };
+        }
 
         public converter(dataView: DataView): ConnectionMapDataView {
 
@@ -512,32 +611,11 @@ module powerbi.extensibility.visual {
                 };
             }
 
-            debugger;
+            debugger;                      
 
-            let directions: Direction[] = [];
-
+            let directions = this.parseDataViewToDirections(dataView);
+            
             let marketCategory = dataView.categorical.categories[0];
-            let codesFrom: any[] = dataView.categorical.categories[1].values,
-                codesTo: any[] = dataView.categorical.categories[2].values,
-                markets: any = dataView.categorical.categories[0].values;
-
-            let latsFrom: any[] = dataView.categorical.values[0].values,
-                latsTo: any[] = dataView.categorical.values[2].values,
-                longsFrom: any[] = dataView.categorical.values[1].values,
-                longsTo: any[] = dataView.categorical.values[3].values;
-
-            markets.forEach((item: any, index: number) => {
-                directions.push({
-                    market: markets[index],
-                    index: index,
-                    airportCodeFrom: codesFrom[index],
-                    airportCodeTo: codesTo[index],
-                    latitudeFrom: latsFrom[index],
-                    longitudeFrom: longsFrom[index],
-                    latitudeTo: latsTo[index],
-                    longitudeTo: longsTo[index]
-                });
-            });
 
             let processedArcs: ConnectionMapArcList = {},
                 processedMarkers: ConnectionMapMarkerList = {};
@@ -548,86 +626,34 @@ module powerbi.extensibility.visual {
 
             for (var item in directions) {
                 let direction = directions[item];
-
-                let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom),
-                    toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo);
-
                 let keyArc = direction.market,
                     keyFrom = direction.airportCodeFrom,
-                    keyTo = direction.airportCodeTo;
+                    keyTo = direction.airportCodeTo;                    
 
-                let airportCodeFrom = direction.airportCodeFrom,
-                    airportCodeTo = direction.airportCodeTo;
-
-                let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);                
-
-                let popupMessage = "Market: " + direction.market;
-                this.setPopupToElement(popupMessage, arc);
-                this.setOnArcClickEvent(arc);
-
-                let selectionId = this.host.createSelectionIdBuilder()
-                    .withCategory(marketCategory, direction.index)
-                    .createSelectionId();
-                    
-                    this.selectionManager.getSelectionIds()
-                    
-                let connectionMapArc = {
-                    arc: arc,
-                    markers: [],
-                    isSelected: false,
-                    selectionId: selectionId
-                };    
+                let connectionMapArc = this.createConnectionMapArc(direction, settings, marketCategory);    
 
                 processedArcs[keyArc] = connectionMapArc;
-
-                arcsLayer.addLayer(arc);
+                arcsLayer.addLayer(connectionMapArc.arc);
 
                 let connectionMapMarkerFrom: ConnectionMapMarker,
                     connectionMapMarkerTo: ConnectionMapMarker;
 
                 if (!processedMarkers[keyFrom]) {
-                    let markerFrom = this.createCustomizableMarker(fromLatLng, settings);
-
-                    let label = airportCodeFrom;
-                    this.setLabelToElement(label, markerFrom);
-
-                    let popupMessage = "Lat: " + direction.latitudeFrom + "<br>Long: " + direction.longitudeFrom;
-                    this.setPopupToElement(popupMessage, markerFrom);
-                    this.setOnMarkerClickEvent(markerFrom);
-                    
-                    connectionMapMarkerFrom = {
-                        marker: markerFrom,
-                        arcs: [], airportCode: direction.airportCodeFrom,
-                        isSelected: false
-                    };
+                    let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom);
+                    connectionMapMarkerFrom = this.createConnectionMapMarker(direction, fromLatLng, settings);
 
                     processedMarkers[keyFrom] = connectionMapMarkerFrom;
-
-                    markersLayer.addLayer(markerFrom);
+                    markersLayer.addLayer(connectionMapMarkerFrom.marker);
                 } else {
                     connectionMapMarkerFrom = processedMarkers[keyFrom];
                 }
 
                 if (!processedMarkers[keyTo]) {
-                    let markerTo = this.createCustomizableMarker(toLatLng, settings);
+                    let toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo); 
+                    connectionMapMarkerTo = this.createConnectionMapMarker(direction, toLatLng, settings);
 
-                    let label = airportCodeTo;
-                    this.setLabelToElement(label, markerTo);
-
-                    let popupMessage = "Lat: " + direction.latitudeTo + "<br>Long: " + direction.longitudeTo;
-                    this.setPopupToElement(popupMessage, markerTo);
-                    this.setOnMarkerClickEvent(markerTo);
-                    
-                    connectionMapMarkerTo = {
-                        marker: markerTo,
-                        arcs: [],
-                        airportCode: direction.airportCodeTo,
-                        isSelected: false
-                    };
-                    
                     processedMarkers[keyTo] = connectionMapMarkerTo;
-
-                    markersLayer.addLayer(markerTo);
+                    markersLayer.addLayer(connectionMapMarkerTo.marker);
                 } else {
                     connectionMapMarkerTo = processedMarkers[keyTo];
                 }
