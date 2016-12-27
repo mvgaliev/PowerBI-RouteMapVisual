@@ -13,6 +13,7 @@
 	  "src/visual.ts",
     "src/dataInterfaces.ts",
     "src/settings.ts",    
-    "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.d.ts"
+    "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.d.ts",
+    "node_modules/leaflet-curve/leaflet.curve.js"
   ]
 }

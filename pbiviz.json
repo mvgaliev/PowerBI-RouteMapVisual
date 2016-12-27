@@ -22,7 +22,8 @@
     "external/custom-leaflet-arc-l-init.js",
     "node_modules/jquery/dist/jquery.min.js",
     "node_modules/leaflet-arc/bin/leaflet-arc.min.js",    
-    "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.js"
+    "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.js",
+    "node_modules/leaflet-curve/leaflet.curve.js"
   ],
   "style": "style/visual.less",
   "capabilities": "capabilities.json",

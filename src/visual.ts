@@ -196,6 +196,83 @@ module powerbi.extensibility.visual {
             point.y = point.y + offsetY;
             return this.map.unproject(point);
         }
+        
+        private midpointTo(pointFrom: L.LatLng, pointTo: L.LatLng): L.LatLng {
+
+            var a1 = pointFrom.lat * Math.PI / 180, b1 = pointFrom.lng * Math.PI / 180;
+            var a2 = pointTo.lat * Math.PI / 180, b2 = pointTo.lng * Math.PI / 180;
+
+            if (Math.abs(b2-b1) > Math.PI) b1 += 2*Math.PI; // crossing anti-meridian
+
+            var a3 = (a1+a2)/2;
+            var f1 = Math.tan(Math.PI/4 + a1/2);
+            var f2 = Math.tan(Math.PI/4 + a2/2);
+            var f3 = Math.tan(Math.PI/4 + a3/2);
+            var b3 = ((b2-b1)*Math.log(f3) + b1*Math.log(f2) - b2*Math.log(f1) ) / Math.log(f2/f1);
+
+            if (!isFinite(b3)) b3 = (b1+b2)/2; // parallel of latitude
+
+            var p = L.latLng((a3 * 180 / Math.PI), (b3 * 180 / Math.PI + 540) % 360 - 180); // normalise to −180..+180°
+
+            return L.latLng((pointFrom.lat + pointTo.lat) / 2, (pointFrom.lng + pointTo.lng) / 2);
+        };
+        
+        private getRoot(angleCoeficient: number, radianLatitude: number, distance: number): number[] {
+            
+            // ax^2 + bx + constant = distance    (distance = distance * distance * angleCoeficient * angleCoeficient from the formula) 
+            let constant = (angleCoeficient * angleCoeficient + 1) * radianLatitude * radianLatitude;         
+            var c = constant - (distance * distance * angleCoeficient * angleCoeficient);
+            let a = angleCoeficient * angleCoeficient + 1;
+            let b = -2 * radianLatitude * (angleCoeficient * angleCoeficient + 1);
+	
+            var d = b * b - 4 * a * c;
+            
+            var x1 = -b / ( 2 * a ) - Math.sqrt( d ) / ( 2 * a );
+            var x2 = -b / ( 2 * a ) + Math.sqrt( d ) / ( 2 * a );
+            
+            let rootArray = [];
+            rootArray.push(x1);
+            rootArray.push(x2);
+            
+            return rootArray;
+        }
+        
+        private createCurvedLine(pointFrom: L.LatLng, pointTo: L.LatLng, market: string, settings: ConnectionMapSettings, distanceCoef?: number): L.Polyline {
+            let l: any = L;
+            
+            let midpoint = this.midpointTo(pointFrom, pointTo);
+            
+            let ang1 = (pointTo.lng - pointFrom.lng) / (pointTo.lat - pointFrom.lat);
+            let ang2 = -(pointTo.lat - pointFrom.lat) / (pointTo.lng - pointFrom.lng);
+            
+            let plat = midpoint.lat * Math.PI / 180;
+            let plng = midpoint.lng * Math.PI / 180;
+            
+            //let deltaLat = pointTo.lat * Math.PI / 180 - plat;
+            //let deltaLng = pointTo.lng * Math.PI / 180 - plng;
+            
+            let deltaLat = pointTo.lat - midpoint.lat;
+            let deltaLng = pointTo.lng - midpoint.lng;
+            
+            let distance = Math.sqrt(deltaLat * deltaLat + deltaLng * deltaLng)* Math.PI / 180;
+            
+            distance = distanceCoef ? distance * distanceCoef : distance;
+            
+            distance = distance > 0.5 ? distance / 2 : distance;
+            
+            console.log("market: " + market + "distance: " + distance);
+            //distance = 1 + 1 / distance;
+
+            let latitudes = this.getRoot(ang1, plat, distance);
+            let lat = pointFrom.lat > 0 && pointTo.lat > 0 ? latitudes[1] : latitudes[0];
+            let long1 = ((ang2 * (lat - plat) + plng) * 180 / Math.PI + 540) % 360 - 180;
+
+            let curve = l.curve(['M',[pointFrom.lat,pointFrom.lng],
+					   'Q',[lat * 180/Math.PI, long1],
+						   [pointTo.lat, pointTo.lng]], {color: settings.routes.getColor()} );
+            
+            return curve;
+        }
 
         private createMarkerDirectionLabels(marker: L.CircleMarker, arcs: ConnectionMapArc[], title: string): L.Marker[] {
             let markerPoint = marker.getLatLng(),
@@ -244,7 +321,7 @@ module powerbi.extensibility.visual {
         private createMarkersDirectionLabels(markerList: ConnectionMapMarkerList): L.Marker[] {
             let outOfBorderLabels: L.Marker[] = [];
 
-            for (var item in markerList) {
+           /* for (var item in markerList) {
                 let markerWithArcs = markerList[item];
 
                 let newLabels = this.createMarkerDirectionLabels(markerWithArcs.marker, markerWithArcs.arcs, markerWithArcs.airportCode);
@@ -252,7 +329,7 @@ module powerbi.extensibility.visual {
                 newLabels.forEach((item) => {
                     outOfBorderLabels.push(item);
                 });
-            }
+            }*/
 
             return outOfBorderLabels;
         }
@@ -546,8 +623,9 @@ module powerbi.extensibility.visual {
             let airportCodeFrom = direction.airportCodeFrom,
                 airportCodeTo = direction.airportCodeTo;
 
-            let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
-
+            //let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
+            let arc = this.createCurvedLine(fromLatLng, toLatLng, direction.market, settings);
+            
             this.setPopupToElement(direction.tooltip, arc);
             this.setOnArcClickEvent(arc);
 
@@ -563,19 +641,22 @@ module powerbi.extensibility.visual {
             };
         }
         
-        private createConnectionMapMarker(direction: Direction, latLng: L.LatLng, settings: ConnectionMapSettings): ConnectionMapMarker {                
+        private createConnectionMapMarker(direction: Direction, isDestinationPoint: boolean, latLng: L.LatLng, settings: ConnectionMapSettings): ConnectionMapMarker {                
             
-            let markerFrom = this.createCustomizableMarker(latLng, settings);
+            let marker = this.createCustomizableMarker(latLng, settings);
 
-            let label = direction.airportCodeFrom;
-            this.setLabelToElement(label, markerFrom);
+            let label = isDestinationPoint ? direction.airportCodeTo : direction.airportCodeFrom;
+            this.setLabelToElement(label, marker);
 
-            let popupMessage = "Lat: " + direction.latitudeFrom + "<br>Long: " + direction.longitudeFrom;
-            this.setPopupToElement(popupMessage, markerFrom);
-            this.setOnMarkerClickEvent(markerFrom);
+            let lat = isDestinationPoint ? direction.latitudeTo : direction.latitudeFrom;
+            let long = isDestinationPoint ? direction.longitudeTo : direction.longitudeFrom;
+            
+            let popupMessage = "Lat: " + lat + "<br>Long: " + long;
+            this.setPopupToElement(popupMessage, marker);
+            this.setOnMarkerClickEvent(marker);
 
             return {
-                marker: markerFrom,
+                marker: marker,
                 arcs: [], 
                 airportCode: direction.airportCodeFrom,
                 isSelected: false
@@ -640,7 +721,7 @@ module powerbi.extensibility.visual {
 
                 if (!processedMarkers[keyFrom]) {
                     let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom);
-                    connectionMapMarkerFrom = this.createConnectionMapMarker(direction, fromLatLng, settings);
+                    connectionMapMarkerFrom = this.createConnectionMapMarker(direction, false, fromLatLng, settings);
 
                     processedMarkers[keyFrom] = connectionMapMarkerFrom;
                     markersLayer.addLayer(connectionMapMarkerFrom.marker);
@@ -650,7 +731,7 @@ module powerbi.extensibility.visual {
 
                 if (!processedMarkers[keyTo]) {
                     let toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo); 
-                    connectionMapMarkerTo = this.createConnectionMapMarker(direction, toLatLng, settings);
+                    connectionMapMarkerTo = this.createConnectionMapMarker(direction, true, toLatLng, settings);
 
                     processedMarkers[keyTo] = connectionMapMarkerTo;
                     markersLayer.addLayer(connectionMapMarkerTo.marker);
