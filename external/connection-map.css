@@ -1,9 +1,37 @@
 .connection-map-direction-label {
-            background: #fff;
-            padding: 4px;
-            border-radius: 4px;
-            font-size: 12px;
-            line-height: 12px;
-            width: auto !important;
-            white-space: nowrap;
-        }
+    background: #fff;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 12px;
+    width: auto !important;
+    white-space: nowrap;
+}
+
+.connection-map-label {
+    background: transparent !important;
+    padding: 4px;
+    font-size: 13px;
+    line-height: 13px;
+    width: auto !important;
+    white-space: nowrap;
+    border-color: transparent !important;    
+}
+
+.leaflet-tooltip.connection-map-label  {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.leaflet-tooltip-left.connection-map-label,
+.leaflet-tooltip-right.connection-map-label {    
+    background: transparent !important;
+    border: none !important;    
+    background-color: transparent !important;
+    border-color: transparent !important;
+    border-left-color: transparent !important;    
+	border-right-color: transparent !important;  
+}

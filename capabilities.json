@@ -141,6 +141,16 @@
                         }
                     }
                 },
+                "labelFontColor": {
+                    "displayName": "Label font color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
                 "showOutOfMapMarkerLabels": {
                     "displayName": "Show out map border labels",
                     "type": {

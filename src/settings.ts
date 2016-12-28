@@ -30,17 +30,26 @@ module powerbi.extensibility.visual {
     export class ConnectionMapMarkerSettings {
         public fill: string = "red";
     }
+    
+    export class CustomColor {
+        public solid: { color: string }
+        
+        constructor(color: string) {
+            this.solid = { color: color };
+        }
+    }
 
     export class ConnectionMapRoutesSettings {
-        private arcColor: { solid: { color: string } } = { solid: { color: "red"} };
+        public arcColor: CustomColor = new CustomColor("red");
+        public labelFontColor: CustomColor = new CustomColor("black");
         public showOutOfMapMarkerLabels: boolean = true;
         
-        public getColor() {
+        public getArcColor() {
             return this.arcColor.solid.color;
         }
         
-        public setColor(value: string) {
-            this.arcColor.solid.color = value;
+        public getLabelFontColor() {
+            return this.labelFontColor.solid.color;
         }
     }
 

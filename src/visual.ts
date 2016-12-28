@@ -27,9 +27,11 @@
 module powerbi.extensibility.visual {
     import DataViewObjects = powerbi.DataViewObjects;
     import DataViewValueColumn = powerbi.DataViewValueColumn;
-
+    
+    const labelSelector = ".connection-map-label";
+    const labelClassName = "connection-map-label";
     export class Visual implements IVisual {
-
+        
         private connectionMapDataView: ConnectionMapDataView;
         private targetHtmlElement: HTMLElement;
         private hostContainer: JQuery;
@@ -61,14 +63,16 @@ module powerbi.extensibility.visual {
             let objectName = options.objectName;
             let objectEnumeration: VisualObjectInstance[] = [];
 
+            debugger;
             switch (objectName) {
                 case 'routes':
                     objectEnumeration.push({
                         objectName: objectName,
                         displayName: "Routes",
                         properties: {
-                            arcColor: this.settings.routes.getColor(),
-                            showOutOfMapMarkerLabels: this.settings.routes.showOutOfMapMarkerLabels
+                            arcColor: this.settings.routes.getArcColor(),
+                            labelFontColor: this.settings.routes.getLabelFontColor(),
+                            showOutOfMapMarkerLabels: this.settings.routes.showOutOfMapMarkerLabels                           
                         },
                         selector: null
                     });
@@ -217,13 +221,22 @@ module powerbi.extensibility.visual {
             return L.latLng((pointFrom.lat + pointTo.lat) / 2, (pointFrom.lng + pointTo.lng) / 2);
         };
         
-        private getRoot(angleCoeficient: number, radianLatitude: number, distance: number): number[] {
+        private getRoot(angleCoeficient: number, radianLatitude: number, radianLongitude: number, distance: number): number[] {
+            
+            var k1 = angleCoeficient;
+            var k2 = -k1 * radianLatitude + radianLongitude;
+            var x0 = radianLatitude;
+            var y0 = radianLongitude;
+            
+            var a = k1 * k1 + 1;
+            var b = 2 * k1 * k2 - 2 * x0 - 2 * k1 * y0;
+            var c = x0 * x0 + k2 * k2 - 2 * y0 * k2 + y0 * y0 - distance * distance;
             
             // ax^2 + bx + constant = distance    (distance = distance * distance * angleCoeficient * angleCoeficient from the formula) 
-            let constant = (angleCoeficient * angleCoeficient + 1) * radianLatitude * radianLatitude;         
+           /* let constant = (angleCoeficient * angleCoeficient + 1) * radianLatitude * radianLatitude;         
             var c = constant - (distance * distance * angleCoeficient * angleCoeficient);
             let a = angleCoeficient * angleCoeficient + 1;
-            let b = -2 * radianLatitude * (angleCoeficient * angleCoeficient + 1);
+            let b = -2 * radianLatitude * (angleCoeficient * angleCoeficient + 1);*/
 	
             var d = b * b - 4 * a * c;
             
@@ -263,13 +276,13 @@ module powerbi.extensibility.visual {
             console.log("market: " + market + "distance: " + distance);
             //distance = 1 + 1 / distance;
 
-            let latitudes = this.getRoot(ang1, plat, distance);
+            let latitudes = this.getRoot(ang2, plat, plng, distance);
             let lat = pointFrom.lat > 0 && pointTo.lat > 0 ? latitudes[1] : latitudes[0];
             let long1 = ((ang2 * (lat - plat) + plng) * 180 / Math.PI + 540) % 360 - 180;
 
             let curve = l.curve(['M',[pointFrom.lat,pointFrom.lng],
 					   'Q',[lat * 180/Math.PI, long1],
-						   [pointTo.lat, pointTo.lng]], {color: settings.routes.getColor()} );
+						   [pointTo.lat, pointTo.lng]], {color: settings.routes.getArcColor()} );
             
             return curve;
         }
@@ -353,20 +366,29 @@ module powerbi.extensibility.visual {
             document.getElementById('map').style.height = viewport.height.toString() + "px";
         }
 
-        private setPopupToElement(content: string, element: any): void {
-            element.bindPopup(content, { autoPan: false });
+        private setPopupToElement(content: string, element: any): void { 
+            
+            if(!content) {
+                return;
+            }         
+                           
+            element.bindPopup(content, { autoPan: false });                  
 
             let map = this.map;
+            
             element.on("mouseover", function (e) {
                 this.openPopup(this, e.latlng);
             });
+            
             element.on('mouseout', function (e) {
-                this.closePopup();
+                if(this.getPopup().getContent()) {
+                    this.closePopup();
+                }                
             });
         }
 
         private setLabelToElement(content: string, element: any): void {
-            element.bindTooltip(content, { permanent: true });
+            element.bindTooltip(content, { permanent: true, className: "connection-map-label", offset: [0, 0] });
         }
 
         private setSelectionStyle(selected: boolean, element: L.Path): void {
@@ -395,8 +417,7 @@ module powerbi.extensibility.visual {
         private setOnMarkerClickEvent(element: L.CircleMarker): void {
             let me = this;
 
-            element.on('click', function (e) {
-
+            element.on('click', function (e) {                
                 let markers = me.connectionMapDataView.markers;
                 let arcs = me.connectionMapDataView.arcs;
                 
@@ -462,7 +483,8 @@ module powerbi.extensibility.visual {
         private setOnArcClickEvent(element: L.Polyline) {
             let me = this;
 
-            element.on('click', function (e) {
+            element.on('click', function (e) {  
+                (e as L.MouseEvent).originalEvent.preventDefault();              
                 
                 let markers = me.connectionMapDataView.markers;
                 let arcs = me.connectionMapDataView.arcs;
@@ -527,7 +549,7 @@ module powerbi.extensibility.visual {
             let l: any = L;
 
             let arc = l.Polyline.Arc(fromLatLng, toLatLng, {
-                color: settings.routes.getColor(),
+                color: settings.routes.getArcColor(),
                 vertices: 250
             });
 
@@ -545,10 +567,16 @@ module powerbi.extensibility.visual {
             return marker;
         }
 
+        private setLabelFontColor(color: string) {
+            $(labelSelector).css("color", color);
+        }
+
         public render(): void {
             this.map.addLayer(this.connectionMapDataView.arcsLayer);
             this.map.addLayer(this.connectionMapDataView.markersLayer);
             this.map.addLayer(this.connectionMapDataView.labelsLayer);
+            
+            this.setLabelFontColor(this.settings.routes.getLabelFontColor());            
         }
 
         public clearMap(): void {
@@ -624,9 +652,10 @@ module powerbi.extensibility.visual {
                 airportCodeTo = direction.airportCodeTo;
 
             //let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
-            let arc = this.createCurvedLine(fromLatLng, toLatLng, direction.market, settings);
-            
+            let arc = this.createCurvedLine(fromLatLng, toLatLng, direction.market, settings);          
+
             this.setPopupToElement(direction.tooltip, arc);
+            
             this.setOnArcClickEvent(arc);
 
             let selectionId = this.host.createSelectionIdBuilder()
@@ -667,7 +696,7 @@ module powerbi.extensibility.visual {
 
             this.isDataValid = false;
             let settings = this.settings = this.parseSettings(dataView);
-
+            
             if (!dataView
                 || !dataView.categorical
                 || !dataView.categorical.categories
@@ -750,7 +779,7 @@ module powerbi.extensibility.visual {
                 this.addMarkersToLayer(outOfBorderLabels, labelsLayer);
             }
 
-            this.isDataValid = true;
+            this.isDataValid = true;                  
 
             return {
                 arcs: processedArcs,
@@ -790,11 +819,11 @@ module powerbi.extensibility.visual {
                 me.handleMove();
             });
 
-            this.map.on('click', function (e) {
-                
+            this.map.on('click', function (e) {                
                 let multipleSelection = (e as L.MouseEvent).originalEvent.ctrlKey;
+                let defaultPrevented = (e as L.MouseEvent).originalEvent.defaultPrevented;
                 
-                if(multipleSelection) {
+                if(multipleSelection || defaultPrevented) {
                     return;
                 }
                 
