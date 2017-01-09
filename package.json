@@ -10,7 +10,6 @@
     "leaflet": "1.0.2",
     "leaflet-arc": "1.0.2",
     "leaflet-curve": "^1.0.0",
-    "leaflet-label": "^0.2.1-0",
     "typings": "1.5.0"
   }
 }
