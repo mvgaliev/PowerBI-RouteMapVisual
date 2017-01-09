@@ -96,13 +96,6 @@ module powerbi.extensibility.visual {
         }
 
         public initMap(): void {
-            //this.map = L.map('map').setView([51.4707017, -0.4608747], 14);  
-
-            /*var Esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
-            });
-            
-            this.map.addLayer(Esri_WorldStreetMap);*/
 
             this.map = L.map('map').setView([33.9415839, -118.4435494], 3);
 
@@ -125,7 +118,7 @@ module powerbi.extensibility.visual {
 
         public update(options: VisualUpdateOptions): void {
             // render new data if dataset was changed
-            if (options.type == VisualUpdateType.Data) {
+            if (options.type == VisualUpdateType.Data || options.type == VisualUpdateType.All) {
                 let dataView: DataView = options
                     && options.dataViews
                     && options.dataViews[0];
@@ -223,20 +216,15 @@ module powerbi.extensibility.visual {
         
         private getRoot(angleCoeficient: number, radianLatitude: number, radianLongitude: number, distance: number): number[] {
             
-            var k1 = angleCoeficient;
-            var k2 = -k1 * radianLatitude + radianLongitude;
             var x0 = radianLatitude;
             var y0 = radianLongitude;
+            
+            var k1 = angleCoeficient;
+            var k2 = -k1 * x0 + y0;            
             
             var a = k1 * k1 + 1;
             var b = 2 * k1 * k2 - 2 * x0 - 2 * k1 * y0;
             var c = x0 * x0 + k2 * k2 - 2 * y0 * k2 + y0 * y0 - distance * distance;
-            
-            // ax^2 + bx + constant = distance    (distance = distance * distance * angleCoeficient * angleCoeficient from the formula) 
-           /* let constant = (angleCoeficient * angleCoeficient + 1) * radianLatitude * radianLatitude;         
-            var c = constant - (distance * distance * angleCoeficient * angleCoeficient);
-            let a = angleCoeficient * angleCoeficient + 1;
-            let b = -2 * radianLatitude * (angleCoeficient * angleCoeficient + 1);*/
 	
             var d = b * b - 4 * a * c;
             
@@ -250,38 +238,36 @@ module powerbi.extensibility.visual {
             return rootArray;
         }
         
-        private createCurvedLine(pointFrom: L.LatLng, pointTo: L.LatLng, market: string, settings: ConnectionMapSettings, distanceCoef?: number): L.Polyline {
-            let l: any = L;
+        private getSpecialPointLatLng(fromLatLng: L.LatLng, toLatLng: L.LatLng, midLatLng: L.LatLng): L.LatLng {
+            let midLatRadian = midLatLng.lat * Math.PI / 180;
+            let midLngRadian = midLatLng.lng * Math.PI / 180;
             
-            let midpoint = this.midpointTo(pointFrom, pointTo);
+            let ang1 = (toLatLng.lng - fromLatLng.lng) / (toLatLng.lat - fromLatLng.lat);
+            let ang2 = -(toLatLng.lat - fromLatLng.lat) / (toLatLng.lng - fromLatLng.lng);   
             
-            let ang1 = (pointTo.lng - pointFrom.lng) / (pointTo.lat - pointFrom.lat);
-            let ang2 = -(pointTo.lat - pointFrom.lat) / (pointTo.lng - pointFrom.lng);
+            let deltaLat = toLatLng.lat - midLatLng.lat;
+            let deltaLng = toLatLng.lng - midLatLng.lng;   
             
-            let plat = midpoint.lat * Math.PI / 180;
-            let plng = midpoint.lng * Math.PI / 180;
-            
-            //let deltaLat = pointTo.lat * Math.PI / 180 - plat;
-            //let deltaLng = pointTo.lng * Math.PI / 180 - plng;
-            
-            let deltaLat = pointTo.lat - midpoint.lat;
-            let deltaLng = pointTo.lng - midpoint.lng;
-            
-            let distance = Math.sqrt(deltaLat * deltaLat + deltaLng * deltaLng)* Math.PI / 180;
-            
-            distance = distanceCoef ? distance * distanceCoef : distance;
+            let distance = Math.sqrt(deltaLat * deltaLat + deltaLng * deltaLng)* Math.PI / 180;     
             
             distance = distance > 0.5 ? distance / 2 : distance;
             
-            console.log("market: " + market + "distance: " + distance);
-            //distance = 1 + 1 / distance;
-
-            let latitudes = this.getRoot(ang2, plat, plng, distance);
-            let lat = pointFrom.lat > 0 && pointTo.lat > 0 ? latitudes[1] : latitudes[0];
-            let long1 = ((ang2 * (lat - plat) + plng) * 180 / Math.PI + 540) % 360 - 180;
+            let latitudes = this.getRoot(ang2, midLatRadian, midLngRadian, distance);
+            let lat = fromLatLng.lat > 0 && toLatLng.lat > 0 ? latitudes[1]: latitudes[0];
+            let long = ((ang2 * (lat - midLatRadian) + midLngRadian) * 180 / Math.PI + 540) % 360 - 180;   
+            
+            return L.latLng(lat * 180/Math.PI, long);  
+        }
+        
+        private createCurvedLine(pointFrom: L.LatLng, pointTo: L.LatLng, market: string, settings: ConnectionMapSettings, distanceCoef?: number): L.Polyline {
+            let l: any = L;
+            
+            let midpoint = this.midpointTo(pointFrom, pointTo);                    
+            
+            let specialPoint = this.getSpecialPointLatLng(pointFrom, pointTo, midpoint);                            
 
             let curve = l.curve(['M',[pointFrom.lat,pointFrom.lng],
-					   'Q',[lat * 180/Math.PI, long1],
+					   'Q',[specialPoint.lat, specialPoint.lng],
 						   [pointTo.lat, pointTo.lng]], {color: settings.routes.getArcColor()} );
             
             return curve;
@@ -299,7 +285,7 @@ module powerbi.extensibility.visual {
                     let connectionMapArc = arcs[item],
                         coords = connectionMapArc.arc.getLatLngs();
 
-                    var isMarkerOnThePolyline = this.isMarkerOnTheLine(coords, markerPoint);
+                    let isMarkerOnThePolyline = this.isMarkerOnTheLine(coords, markerPoint);
                     if (isMarkerOnThePolyline === 0)
                         continue;
 
@@ -334,7 +320,7 @@ module powerbi.extensibility.visual {
         private createMarkersDirectionLabels(markerList: ConnectionMapMarkerList): L.Marker[] {
             let outOfBorderLabels: L.Marker[] = [];
 
-           /* for (var item in markerList) {
+            for (var item in markerList) {
                 let markerWithArcs = markerList[item];
 
                 let newLabels = this.createMarkerDirectionLabels(markerWithArcs.marker, markerWithArcs.arcs, markerWithArcs.airportCode);
@@ -342,7 +328,7 @@ module powerbi.extensibility.visual {
                 newLabels.forEach((item) => {
                     outOfBorderLabels.push(item);
                 });
-            }*/
+            }
 
             return outOfBorderLabels;
         }
@@ -561,7 +547,8 @@ module powerbi.extensibility.visual {
             let marker = L.circleMarker(latLng, {
                 color: "blue",
                 fillColor: "blue",
-                radius: 7
+                fillOpacity: 1,
+                radius: 5
             });
 
             return marker;
@@ -650,7 +637,8 @@ module powerbi.extensibility.visual {
 
             let airportCodeFrom = direction.airportCodeFrom,
                 airportCodeTo = direction.airportCodeTo;
-
+            
+            
             //let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
             let arc = this.createCurvedLine(fromLatLng, toLatLng, direction.market, settings);          
 
@@ -775,8 +763,9 @@ module powerbi.extensibility.visual {
             }
 
             if (this.settings.routes.showOutOfMapMarkerLabels) {
-                let outOfBorderLabels: L.Marker[] = this.createMarkersDirectionLabels(processedMarkers);
-                this.addMarkersToLayer(outOfBorderLabels, labelsLayer);
+                //not working with curves
+              /*  let outOfBorderLabels: L.Marker[] = this.createMarkersDirectionLabels(processedMarkers);
+                this.addMarkersToLayer(outOfBorderLabels, labelsLayer);*/
             }
 
             this.isDataValid = true;                  
@@ -802,8 +791,9 @@ module powerbi.extensibility.visual {
 
             let showLayers = this.settings.routes.showOutOfMapMarkerLabels;
             if (showLayers) {
-                let outOfBorderLabels: L.Marker[] = this.createMarkersDirectionLabels(markers);
-                this.addMarkersToLayer(outOfBorderLabels, labelsLayer);
+                //not working with curves
+               /* let outOfBorderLabels: L.Marker[] = this.createMarkersDirectionLabels(markers);
+                this.addMarkersToLayer(outOfBorderLabels, labelsLayer);*/
             }
         }
 

@@ -28,10 +28,15 @@
 
 .leaflet-tooltip-left.connection-map-label,
 .leaflet-tooltip-right.connection-map-label {    
-    background: transparent !important;
-    border: none !important;    
-    background-color: transparent !important;
-    border-color: transparent !important;
-    border-left-color: transparent !important;    
-	border-right-color: transparent !important;  
+    background: transparent;
+    border: none;    
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.connection-map-label.leaflet-tooltip-left:before {
+	border-left-color: transparent;
+}
+.connection-map-label.leaflet-tooltip-right:before {
+	border-right-color: transparent;
 }
