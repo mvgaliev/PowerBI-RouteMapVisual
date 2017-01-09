@@ -26,7 +26,33 @@
 
 module powerbi.extensibility.visual.PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF  {
     export interface ConnectionMapDataView {
-        destinations: Destination[]
+        markers: ConnectionMapMarkerList,
+        arcs: ConnectionMapArcList,
+        arcsLayer: L.FeatureGroup,
+        markersLayer: L.FeatureGroup,
+        labelsLayer: L.FeatureGroup
+    }
+    
+    export interface ConnectionMapMarkerList {
+        [key: string]: ConnectionMapMarker;
+    }
+    
+    export interface ConnectionMapArcList {
+        [key: string]: ConnectionMapArc;
+    }
+    
+    export interface ConnectionMapMarker {
+        marker: L.CircleMarker, 
+        airportCode: string,
+        arcs: ConnectionMapArc[],
+        isSelected: boolean
+    }
+    
+    export interface ConnectionMapArc {
+        arc: L.Polyline, 
+        markers: ConnectionMapMarker[],
+        isSelected: boolean,
+        selectionId: ISelectionId
     }
     
     export interface ConnectionMapAirport {
@@ -35,20 +61,15 @@ module powerbi.extensibility.visual.PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF 
         longitude: number
     }
     
-    export interface ConnectionMapFlight {
-        flightNumber: string,
-        airportFrom: ConnectionMapAirport, 
-        airportTo: ConnectionMapAirport
-    }
-    
-    export interface Destination {
-        key: string,
-        airportNameFrom: string,
+    export interface Direction {
+        market: string,
+        index: number,
+        airportCodeFrom: string,
+        airportCodeTo: string,
         latitudeFrom: number,
         longitudeFrom: number,
-        airportNameTo: string,
         latitudeTo: number,
         longitudeTo: number,
-        flightNumbers: string[]
+        tooltip: string      
     }
 }

@@ -63,7 +63,6 @@ module powerbi.extensibility.visual {
             let objectName = options.objectName;
             let objectEnumeration: VisualObjectInstance[] = [];
 
-            debugger;
             switch (objectName) {
                 case 'routes':
                     objectEnumeration.push({
@@ -195,8 +194,9 @@ module powerbi.extensibility.visual {
         }
         
         private midpointTo(pointFrom: L.LatLng, pointTo: L.LatLng): L.LatLng {
-
-            var a1 = pointFrom.lat * Math.PI / 180, b1 = pointFrom.lng * Math.PI / 180;
+            
+            //geodesic middle point
+            /*var a1 = pointFrom.lat * Math.PI / 180, b1 = pointFrom.lng * Math.PI / 180;
             var a2 = pointTo.lat * Math.PI / 180, b2 = pointTo.lng * Math.PI / 180;
 
             if (Math.abs(b2-b1) > Math.PI) b1 += 2*Math.PI; // crossing anti-meridian
@@ -209,7 +209,7 @@ module powerbi.extensibility.visual {
 
             if (!isFinite(b3)) b3 = (b1+b2)/2; // parallel of latitude
 
-            var p = L.latLng((a3 * 180 / Math.PI), (b3 * 180 / Math.PI + 540) % 360 - 180); // normalise to −180..+180°
+            var p = L.latLng((a3 * 180 / Math.PI), (b3 * 180 / Math.PI + 540) % 360 - 180); // normalise to −180..+180°*/
 
             return L.latLng((pointFrom.lat + pointTo.lat) / 2, (pointFrom.lng + pointTo.lng) / 2);
         };
@@ -381,7 +381,8 @@ module powerbi.extensibility.visual {
             let opacity: number = selected ? 1 : 0.3;
 
             element.setStyle({
-                opacity: opacity
+                opacity: opacity,
+                fillOpacity: opacity
             });
         }
 
@@ -707,9 +708,7 @@ module powerbi.extensibility.visual {
                     markersLayer: L.featureGroup(),
                     labelsLayer: L.featureGroup()
                 };
-            }
-
-            debugger;                      
+            }                  
 
             let directions = this.parseDataViewToDirections(dataView);
             
@@ -798,7 +797,6 @@ module powerbi.extensibility.visual {
         }
 
         private setMapHandlers(): void {
-            debugger;
             let me = this;
 
             this.map.on('zoom', function (e) {

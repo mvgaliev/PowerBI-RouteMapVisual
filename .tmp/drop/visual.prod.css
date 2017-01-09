@@ -590,3 +590,41 @@
   margin-left: -12px;
   border-right-color: #fff;
 }
+.visual-PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF_DEBUG .connection-map-direction-label {
+  background: #fff;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 12px;
+  width: auto !important;
+  white-space: nowrap;
+}
+.visual-PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF_DEBUG .connection-map-label {
+  background: transparent !important;
+  padding: 4px;
+  font-size: 13px;
+  line-height: 13px;
+  width: auto !important;
+  white-space: nowrap;
+  border-color: transparent !important;
+}
+.visual-PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF_DEBUG .leaflet-tooltip.connection-map-label {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.visual-PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF_DEBUG .leaflet-tooltip-left.connection-map-label,
+.visual-PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF_DEBUG .leaflet-tooltip-right.connection-map-label {
+  background: transparent;
+  border: none;
+  background-color: transparent;
+  border-color: transparent;
+}
+.visual-PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF_DEBUG .connection-map-label.leaflet-tooltip-left:before {
+  border-left-color: transparent;
+}
+.visual-PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF_DEBUG .connection-map-label.leaflet-tooltip-right:before {
+  border-right-color: transparent;
+}

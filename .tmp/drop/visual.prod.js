@@ -16,6 +16,677 @@ void 0!==c?null===c?void r.removeAttr(a,b):e&&"set"in e&&void 0!==(d=e.set(a,c,b
 !function(t,e){"object"==typeof exports&&"object"==typeof module?module.exports=e():"function"==typeof define&&define.amd?define("leaflet-arc",[],e):"object"==typeof exports?exports["leaflet-arc"]=e():t["leaflet-arc"]=e()}(this,function(){return function(t){function e(o){if(r[o])return r[o].exports;var s=r[o]={exports:{},id:o,loaded:!1};return t[o].call(s.exports,s,s.exports,e),s.loaded=!0,s.exports}var r={};return e.m=t,e.c=r,e.p="",e(0)}([function(t,e,r){"use strict";function o(t){return t&&t.__esModule?t:{"default":t}}function s(t,e){if(!t.geometries[0]||!t.geometries[0].coords[0])return[];var r=function(){var r=e.lng-t.geometries[0].coords[0][0]-360;return{v:t.geometries.map(function(t){return r+=360,t.coords.map(function(t){return L.latLng([t[1],t[0]+r])})}).reduce(function(t,e){return t.concat(e)})}}();return"object"===("undefined"==typeof r?"undefined":n(r))?r.v:void 0}var i=Object.assign||function(t){for(var e=1;e<arguments.length;e++){var r=arguments[e];for(var o in r)Object.prototype.hasOwnProperty.call(r,o)&&(t[o]=r[o])}return t},n="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol?"symbol":typeof t},a=r(2),h=o(a),p=function(t){return{x:t.lng,y:t.lat}};if(!L)throw new Error("Leaflet is not defined");L.Polyline.Arc=function(t,e,r){var o=L.latLng(t),n=L.latLng(e),a=i({vertices:10,offset:10},r),u=new h["default"].GreatCircle(p(o),p(n)),c=u.Arc(a.vertices,{offset:a.offset}),f=s(c,o);return L.polyline(f,a)}},function(t,e){"use strict";var r=Math.PI/180,o=180/Math.PI,s=function(t,e){this.lon=t,this.lat=e,this.x=r*t,this.y=r*e};s.prototype.view=function(){return String(this.lon).slice(0,4)+","+String(this.lat).slice(0,4)},s.prototype.antipode=function(){var t=-1*this.lat,e=this.lon<0?180+this.lon:(180-this.lon)*-1;return new s(e,t)};var i=function(){this.coords=[],this.length=0};i.prototype.move_to=function(t){this.length++,this.coords.push(t)};var n=function(t){this.properties=t||{},this.geometries=[]};n.prototype.json=function(){if(this.geometries.length<=0)return{geometry:{type:"LineString",coordinates:null},type:"Feature",properties:this.properties};if(1==this.geometries.length)return{geometry:{type:"LineString",coordinates:this.geometries[0].coords},type:"Feature",properties:this.properties};for(var t=[],e=0;e<this.geometries.length;e++)t.push(this.geometries[e].coords);return{geometry:{type:"MultiLineString",coordinates:t},type:"Feature",properties:this.properties}},n.prototype.wkt=function(){for(var t="",e="LINESTRING(",r=function(t){e+=t[0]+" "+t[1]+","},o=0;o<this.geometries.length;o++){if(0===this.geometries[o].coords.length)return"LINESTRING(empty)";var s=this.geometries[o].coords;s.forEach(r),t+=e.substring(0,e.length-1)+")"}return t};var a=function(t,e,r){if(!t||void 0===t.x||void 0===t.y)throw new Error("GreatCircle constructor expects two args: start and end objects with x and y properties");if(!e||void 0===e.x||void 0===e.y)throw new Error("GreatCircle constructor expects two args: start and end objects with x and y properties");this.start=new s(t.x,t.y),this.end=new s(e.x,e.y),this.properties=r||{};var o=this.start.x-this.end.x,i=this.start.y-this.end.y,n=Math.pow(Math.sin(i/2),2)+Math.cos(this.start.y)*Math.cos(this.end.y)*Math.pow(Math.sin(o/2),2);if(this.g=2*Math.asin(Math.sqrt(n)),this.g==Math.PI)throw new Error("it appears "+t.view()+" and "+e.view()+" are 'antipodal', e.g diametrically opposite, thus there is no single route but rather infinite");if(isNaN(this.g))throw new Error("could not calculate great circle between "+t+" and "+e)};if(a.prototype.interpolate=function(t){var e=Math.sin((1-t)*this.g)/Math.sin(this.g),r=Math.sin(t*this.g)/Math.sin(this.g),s=e*Math.cos(this.start.y)*Math.cos(this.start.x)+r*Math.cos(this.end.y)*Math.cos(this.end.x),i=e*Math.cos(this.start.y)*Math.sin(this.start.x)+r*Math.cos(this.end.y)*Math.sin(this.end.x),n=e*Math.sin(this.start.y)+r*Math.sin(this.end.y),a=o*Math.atan2(n,Math.sqrt(Math.pow(s,2)+Math.pow(i,2))),h=o*Math.atan2(i,s);return[h,a]},a.prototype.Arc=function(t,e){var r=[];if(!t||t<=2)r.push([this.start.lon,this.start.lat]),r.push([this.end.lon,this.end.lat]);else for(var o=1/(t-1),s=0;s<t;++s){var a=o*s,h=this.interpolate(a);r.push(h)}for(var p=!1,u=0,c=e&&e.offset?e.offset:10,f=180-c,l=-180+c,d=360-c,y=1;y<r.length;++y){var g=r[y-1][0],v=r[y][0],M=Math.abs(v-g);M>d&&(v>f&&g<l||g>f&&v<l)?p=!0:M>u&&(u=M)}var m=[];if(p&&u<c){var w=[];m.push(w);for(var x=0;x<r.length;++x){var b=parseFloat(r[x][0]);if(x>0&&Math.abs(b-r[x-1][0])>d){var L=parseFloat(r[x-1][0]),S=parseFloat(r[x-1][1]),j=parseFloat(r[x][0]),E=parseFloat(r[x][1]);if(L>-180&&L<l&&180==j&&x+1<r.length&&r[x-1][0]>-180&&r[x-1][0]<l){w.push([-180,r[x][1]]),x++,w.push([r[x][0],r[x][1]]);continue}if(L>f&&L<180&&j==-180&&x+1<r.length&&r[x-1][0]>f&&r[x-1][0]<180){w.push([180,r[x][1]]),x++,w.push([r[x][0],r[x][1]]);continue}if(L<l&&j>f){var F=L;L=j,j=F;var C=S;S=E,E=C}if(L>f&&j<l&&(j+=360),L<=180&&j>=180&&L<j){var G=(180-L)/(j-L),I=G*E+(1-G)*S;w.push([r[x-1][0]>f?180:-180,I]),w=[],w.push([r[x-1][0]>f?-180:180,I]),m.push(w)}else w=[],m.push(w);w.push([b,r[x][1]])}else w.push([r[x][0],r[x][1]])}}else{var N=[];m.push(N);for(var A=0;A<r.length;++A)N.push([r[A][0],r[A][1]])}for(var P=new n(this.properties),_=0;_<m.length;++_){var O=new i;P.geometries.push(O);for(var q=m[_],R=0;R<q.length;++R)O.move_to(q[R])}return P},"undefined"!=typeof t&&"undefined"!=typeof t.exports)t.exports.Coord=s,t.exports.Arc=n,t.exports.GreatCircle=a;else{var h={};h.Coord=s,h.Arc=n,h.GreatCircle=a}},function(t,e,r){"use strict";t.exports=r(1)}])});
 //# sourceMappingURL=leaflet-arc.min.js.map
 /*
+ *  Power BI Visualizations
+ *
+ *  Copyright (c) Microsoft Corporation
+ *  All rights reserved.
+ *  MIT License
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the ""Software""), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+var powerbi;
+(function (powerbi) {
+    var extensibility;
+    (function (extensibility) {
+        var utils;
+        (function (utils) {
+            var dataview;
+            (function (dataview) {
+                // TODO: refactor & focus DataViewTransform into a service with well-defined dependencies.
+                var DataViewTransform;
+                (function (DataViewTransform) {
+                    // TODO: refactor this, setGrouped, and groupValues to a test helper to stop using it in the product
+                    function createValueColumns(values, valueIdentityFields, source) {
+                        if (values === void 0) { values = []; }
+                        var result = values;
+                        setGrouped(result);
+                        if (valueIdentityFields) {
+                            result.identityFields = valueIdentityFields;
+                        }
+                        if (source) {
+                            result.source = source;
+                        }
+                        return result;
+                    }
+                    DataViewTransform.createValueColumns = createValueColumns;
+                    function setGrouped(values, groupedResult) {
+                        values.grouped = groupedResult
+                            ? function () { return groupedResult; }
+                            : function () { return groupValues(values); };
+                    }
+                    DataViewTransform.setGrouped = setGrouped;
+                    /** Group together the values with a common identity. */
+                    function groupValues(values) {
+                        var groups = [], currentGroup;
+                        for (var i = 0, len = values.length; i < len; i++) {
+                            var value = values[i];
+                            if (!currentGroup || currentGroup.identity !== value.identity) {
+                                currentGroup = {
+                                    values: []
+                                };
+                                if (value.identity) {
+                                    currentGroup.identity = value.identity;
+                                    var source = value.source;
+                                    // allow null, which will be formatted as (Blank).
+                                    if (source.groupName !== undefined) {
+                                        currentGroup.name = source.groupName;
+                                    }
+                                    else if (source.displayName) {
+                                        currentGroup.name = source.displayName;
+                                    }
+                                }
+                                groups.push(currentGroup);
+                            }
+                            currentGroup.values.push(value);
+                        }
+                        return groups;
+                    }
+                })(DataViewTransform = dataview.DataViewTransform || (dataview.DataViewTransform = {}));
+            })(dataview = utils.dataview || (utils.dataview = {}));
+        })(utils = extensibility.utils || (extensibility.utils = {}));
+    })(extensibility = powerbi.extensibility || (powerbi.extensibility = {}));
+})(powerbi || (powerbi = {}));
+/*
+ *  Power BI Visualizations
+ *
+ *  Copyright (c) Microsoft Corporation
+ *  All rights reserved.
+ *  MIT License
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the ""Software""), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+var powerbi;
+(function (powerbi) {
+    var extensibility;
+    (function (extensibility) {
+        var utils;
+        (function (utils) {
+            var dataview;
+            (function (dataview) {
+                var DataRoleHelper;
+                (function (DataRoleHelper) {
+                    function getMeasureIndexOfRole(grouped, roleName) {
+                        if (!_.isEmpty(grouped)) {
+                            var firstGroup = grouped[0];
+                            if (firstGroup.values && firstGroup.values.length > 0) {
+                                for (var i = 0, len = firstGroup.values.length; i < len; ++i) {
+                                    var value = firstGroup.values[i];
+                                    if (value && value.source) {
+                                        if (hasRole(value.source, roleName)) {
+                                            return i;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return -1;
+                    }
+                    DataRoleHelper.getMeasureIndexOfRole = getMeasureIndexOfRole;
+                    function getCategoryIndexOfRole(categories, roleName) {
+                        if (!_.isEmpty(categories)) {
+                            for (var i = 0, ilen = categories.length; i < ilen; i++) {
+                                if (hasRole(categories[i].source, roleName)) {
+                                    return i;
+                                }
+                            }
+                        }
+                        return -1;
+                    }
+                    DataRoleHelper.getCategoryIndexOfRole = getCategoryIndexOfRole;
+                    function hasRole(column, name) {
+                        var roles = column.roles;
+                        return roles && roles[name];
+                    }
+                    DataRoleHelper.hasRole = hasRole;
+                    function hasRoleInDataView(dataView, name) {
+                        return dataView != null
+                            && dataView.metadata != null
+                            && dataView.metadata.columns
+                            && _.some(dataView.metadata.columns, function (c) { return c.roles && c.roles[name] !== undefined; }); // any is an alias of some
+                    }
+                    DataRoleHelper.hasRoleInDataView = hasRoleInDataView;
+                    function hasRoleInValueColumn(valueColumn, name) {
+                        return valueColumn && valueColumn.source && valueColumn.source.roles && (valueColumn.source.roles[name] === true);
+                    }
+                    DataRoleHelper.hasRoleInValueColumn = hasRoleInValueColumn;
+                })(DataRoleHelper = dataview.DataRoleHelper || (dataview.DataRoleHelper = {}));
+            })(dataview = utils.dataview || (utils.dataview = {}));
+        })(utils = extensibility.utils || (extensibility.utils = {}));
+    })(extensibility = powerbi.extensibility || (powerbi.extensibility = {}));
+})(powerbi || (powerbi = {}));
+/*
+ *  Power BI Visualizations
+ *
+ *  Copyright (c) Microsoft Corporation
+ *  All rights reserved.
+ *  MIT License
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the ""Software""), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+var powerbi;
+(function (powerbi) {
+    var extensibility;
+    (function (extensibility) {
+        var utils;
+        (function (utils) {
+            var dataview;
+            (function (dataview) {
+                var DataViewObjects;
+                (function (DataViewObjects) {
+                    /** Gets the value of the given object/property pair. */
+                    function getValue(objects, propertyId, defaultValue) {
+                        if (!objects) {
+                            return defaultValue;
+                        }
+                        var object = objects[propertyId.objectName];
+                        return DataViewObject.getValue(object, propertyId.propertyName, defaultValue);
+                    }
+                    DataViewObjects.getValue = getValue;
+                    /** Gets an object from objects. */
+                    function getObject(objects, objectName, defaultValue) {
+                        if (objects && objects[objectName]) {
+                            var object = objects[objectName];
+                            return object;
+                        }
+                        return defaultValue;
+                    }
+                    DataViewObjects.getObject = getObject;
+                    /** Gets the solid color from a fill property. */
+                    function getFillColor(objects, propertyId, defaultColor) {
+                        var value = getValue(objects, propertyId);
+                        if (!value || !value.solid) {
+                            return defaultColor;
+                        }
+                        return value.solid.color;
+                    }
+                    DataViewObjects.getFillColor = getFillColor;
+                })(DataViewObjects = dataview.DataViewObjects || (dataview.DataViewObjects = {}));
+                var DataViewObject;
+                (function (DataViewObject) {
+                    function getValue(object, propertyName, defaultValue) {
+                        if (!object) {
+                            return defaultValue;
+                        }
+                        var propertyValue = object[propertyName];
+                        if (propertyValue === undefined) {
+                            return defaultValue;
+                        }
+                        return propertyValue;
+                    }
+                    DataViewObject.getValue = getValue;
+                    /** Gets the solid color from a fill property using only a propertyName */
+                    function getFillColorByPropertyName(object, propertyName, defaultColor) {
+                        var value = getValue(object, propertyName);
+                        if (!value || !value.solid) {
+                            return defaultColor;
+                        }
+                        return value.solid.color;
+                    }
+                    DataViewObject.getFillColorByPropertyName = getFillColorByPropertyName;
+                })(DataViewObject = dataview.DataViewObject || (dataview.DataViewObject = {}));
+            })(dataview = utils.dataview || (utils.dataview = {}));
+        })(utils = extensibility.utils || (extensibility.utils = {}));
+    })(extensibility = powerbi.extensibility || (powerbi.extensibility = {}));
+})(powerbi || (powerbi = {}));
+/*
+ *  Power BI Visualizations
+ *
+ *  Copyright (c) Microsoft Corporation
+ *  All rights reserved.
+ *  MIT License
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the ""Software""), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+var powerbi;
+(function (powerbi) {
+    var extensibility;
+    (function (extensibility) {
+        var utils;
+        (function (utils) {
+            var dataview;
+            (function (dataview) {
+                // powerbi.extensibility.utils.dataview
+                var DataRoleHelper = powerbi.extensibility.utils.dataview.DataRoleHelper;
+                var converterHelper;
+                (function (converterHelper) {
+                    function categoryIsAlsoSeriesRole(dataView, seriesRoleName, categoryRoleName) {
+                        if (dataView.categories && dataView.categories.length > 0) {
+                            // Need to pivot data if our category soure is a series role
+                            var category = dataView.categories[0];
+                            return category.source &&
+                                DataRoleHelper.hasRole(category.source, seriesRoleName) &&
+                                DataRoleHelper.hasRole(category.source, categoryRoleName);
+                        }
+                        return false;
+                    }
+                    converterHelper.categoryIsAlsoSeriesRole = categoryIsAlsoSeriesRole;
+                    function getSeriesName(source) {
+                        return (source.groupName !== undefined)
+                            ? source.groupName
+                            : source.queryName;
+                    }
+                    converterHelper.getSeriesName = getSeriesName;
+                    function isImageUrlColumn(column) {
+                        var misc = getMiscellaneousTypeDescriptor(column);
+                        return misc != null && misc.imageUrl === true;
+                    }
+                    converterHelper.isImageUrlColumn = isImageUrlColumn;
+                    function isWebUrlColumn(column) {
+                        var misc = getMiscellaneousTypeDescriptor(column);
+                        return misc != null && misc.webUrl === true;
+                    }
+                    converterHelper.isWebUrlColumn = isWebUrlColumn;
+                    function getMiscellaneousTypeDescriptor(column) {
+                        return column
+                            && column.type
+                            && column.type.misc;
+                    }
+                    function hasImageUrlColumn(dataView) {
+                        if (!dataView || !dataView.metadata || _.isEmpty(dataView.metadata.columns))
+                            return false;
+                        return _.some(dataView.metadata.columns, function (column) { return isImageUrlColumn(column) === true; });
+                    }
+                    converterHelper.hasImageUrlColumn = hasImageUrlColumn;
+                })(converterHelper = dataview.converterHelper || (dataview.converterHelper = {}));
+            })(dataview = utils.dataview || (utils.dataview = {}));
+        })(utils = extensibility.utils || (extensibility.utils = {}));
+    })(extensibility = powerbi.extensibility || (powerbi.extensibility = {}));
+})(powerbi || (powerbi = {}));
+/*
+ *  Power BI Visualizations
+ *
+ *  Copyright (c) Microsoft Corporation
+ *  All rights reserved.
+ *  MIT License
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the ""Software""), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+var powerbi;
+(function (powerbi) {
+    var extensibility;
+    (function (extensibility) {
+        var utils;
+        (function (utils) {
+            var dataview;
+            (function (dataview) {
+                var DataViewObjectsParser = (function () {
+                    function DataViewObjectsParser(fillColorNames) {
+                        if (fillColorNames === void 0) { fillColorNames = []; }
+                        this._fillColorRegExp = DataViewObjectsParser.createFillColorRegExp(DataViewObjectsParser.DefaultFillColorNames.concat(fillColorNames));
+                    }
+                    DataViewObjectsParser.createFillColorRegExp = function (fillColorNames) {
+                        var formattedFillColorNames = fillColorNames
+                            .reduce(function (previousValue, currentValue, index) {
+                            return previousValue.concat((index ? "|" : "") + "(" + currentValue + ")");
+                        }, "");
+                        return new RegExp("^" + formattedFillColorNames + "$");
+                    };
+                    DataViewObjectsParser.getDefault = function () {
+                        return new this();
+                    };
+                    DataViewObjectsParser.createPropertyIdentifier = function (objectName, propertyName) {
+                        return {
+                            objectName: objectName,
+                            propertyName: propertyName
+                        };
+                    };
+                    DataViewObjectsParser.parse = function (dataView) {
+                        var dataViewObjectParser = this.getDefault(), properties;
+                        if (!dataView || !dataView.metadata || !dataView.metadata.objects) {
+                            return dataViewObjectParser;
+                        }
+                        properties = dataViewObjectParser.getProperties();
+                        for (var objectName in properties) {
+                            for (var propertyName in properties[objectName]) {
+                                var defaultValue = dataViewObjectParser[objectName][propertyName], getValueFunction = void 0;
+                                getValueFunction = dataViewObjectParser.getValueFunctionByPropertyName(propertyName);
+                                dataViewObjectParser[objectName][propertyName] = getValueFunction(dataView.metadata.objects, properties[objectName][propertyName], defaultValue);
+                            }
+                        }
+                        return dataViewObjectParser;
+                    };
+                    DataViewObjectsParser.isPropertyEnumerable = function (propertyName) {
+                        return !DataViewObjectsParser.InnumerablePropertyPrefix.test(propertyName);
+                    };
+                    DataViewObjectsParser.enumerateObjectInstances = function (dataViewObjectParser, options) {
+                        var dataViewProperties = dataViewObjectParser && dataViewObjectParser[options.objectName];
+                        if (!dataViewProperties) {
+                            return [];
+                        }
+                        var instance = {
+                            objectName: options.objectName,
+                            selector: null,
+                            properties: {}
+                        };
+                        for (var key in dataViewProperties) {
+                            if (_.has(dataViewProperties, key)) {
+                                instance.properties[key] = dataViewProperties[key];
+                            }
+                        }
+                        return {
+                            instances: [instance]
+                        };
+                    };
+                    DataViewObjectsParser.prototype.getValueFunctionByPropertyName = function (propertyName) {
+                        if (this._fillColorRegExp.test(propertyName)) {
+                            return dataview.DataViewObjects.getFillColor;
+                        }
+                        return dataview.DataViewObjects.getValue;
+                    };
+                    DataViewObjectsParser.prototype.getProperties = function () {
+                        var _this = this;
+                        var properties = {}, objectNames = Object.keys(this);
+                        objectNames.forEach(function (objectName) {
+                            if (DataViewObjectsParser.isPropertyEnumerable(objectName)) {
+                                var propertyNames = Object.keys(_this[objectName]);
+                                properties[objectName] = {};
+                                propertyNames.forEach(function (propertyName) {
+                                    if (DataViewObjectsParser.isPropertyEnumerable(objectName)) {
+                                        properties[objectName][propertyName] =
+                                            DataViewObjectsParser.createPropertyIdentifier(objectName, propertyName);
+                                    }
+                                });
+                            }
+                        });
+                        return properties;
+                    };
+                    DataViewObjectsParser.DefaultFillColorNames = [
+                        "fillColor",
+                        "color",
+                        "fill",
+                        "labelColor",
+                        "axisColor"
+                    ];
+                    DataViewObjectsParser.InnumerablePropertyPrefix = /^_/;
+                    return DataViewObjectsParser;
+                }());
+                dataview.DataViewObjectsParser = DataViewObjectsParser;
+            })(dataview = utils.dataview || (utils.dataview = {}));
+        })(utils = extensibility.utils || (extensibility.utils = {}));
+    })(extensibility = powerbi.extensibility || (powerbi.extensibility = {}));
+})(powerbi || (powerbi = {}));
+
+/*
+ * Leaflet.curve v0.1.0 - a plugin for Leaflet mapping library. https://github.com/elfalem/Leaflet.curve
+ * (c) elfalem 2015
+ */
+/*
+ * note that SVG (x, y) corresponds to (long, lat)
+ */
+
+L.Curve = L.Path.extend({
+	options: {
+	},
+	
+	initialize: function(path, options){
+		L.setOptions(this, options);
+		this._setPath(path);
+	},
+	
+	getPath: function(){
+		return this._coords;
+	},
+	
+	setPath: function(path){
+		this._setPath(path);
+		return this.redraw();
+	},
+	
+	getBounds: function() {
+		return this._bounds;
+	},
+
+	_setPath: function(path){
+		this._coords = path;
+		this._bounds = this._computeBounds();
+	},
+	
+	_computeBounds: function(){
+		var bound = new L.LatLngBounds();
+		var lastPoint;
+		var lastCommand;
+		for(var i = 0; i < this._coords.length; i++){
+			coord = this._coords[i];
+			if(typeof coord == 'string' || coord instanceof String){
+				lastCommand = coord;
+			}else if(lastCommand == 'H'){
+				bound.extend([lastPoint.lat,coord[0]]);
+				lastPoint = new L.latLng(lastPoint.lat,coord[0]);
+			}else if(lastCommand == 'V'){
+				bound.extend([coord[0], lastPoint.lng]);
+				lastPoint = new L.latLng(coord[0], lastPoint.lng);
+			}else if(lastCommand == 'C'){
+				var controlPoint1 = new L.latLng(coord[0], coord[1]);
+				coord = this._coords[++i];
+				var controlPoint2 = new L.latLng(coord[0], coord[1]);
+				coord = this._coords[++i];
+				var endPoint = new L.latLng(coord[0], coord[1]);
+
+				bound.extend(controlPoint1);
+				bound.extend(controlPoint2);
+				bound.extend(endPoint);
+
+				endPoint.controlPoint1 = controlPoint1;
+				endPoint.controlPoint2 = controlPoint2;
+				lastPoint = endPoint;
+			}else if(lastCommand == 'S'){
+				var controlPoint2 = new L.latLng(coord[0], coord[1]);
+				coord = this._coords[++i];
+				var endPoint = new L.latLng(coord[0], coord[1]);
+
+				var controlPoint1 = lastPoint;
+				if(lastPoint.controlPoint2){
+					var diffLat = lastPoint.lat - lastPoint.controlPoint2.lat;
+					var diffLng = lastPoint.lng - lastPoint.controlPoint2.lng;
+					controlPoint1 = new L.latLng(lastPoint.lat + diffLat, lastPoint.lng + diffLng);
+				}
+
+				bound.extend(controlPoint1);
+				bound.extend(controlPoint2);
+				bound.extend(endPoint);
+
+				endPoint.controlPoint1 = controlPoint1;
+				endPoint.controlPoint2 = controlPoint2;
+				lastPoint = endPoint;
+			}else if(lastCommand == 'Q'){
+				var controlPoint = new L.latLng(coord[0], coord[1]);
+				coord = this._coords[++i];
+				var endPoint = new L.latLng(coord[0], coord[1]);
+
+				bound.extend(controlPoint);
+				bound.extend(endPoint);
+
+				endPoint.controlPoint = controlPoint;
+				lastPoint = endPoint;
+			}else if(lastCommand == 'T'){
+				var endPoint = new L.latLng(coord[0], coord[1]);
+
+				var controlPoint = lastPoint;
+				if(lastPoint.controlPoint){
+					var diffLat = lastPoint.lat - lastPoint.controlPoint.lat;
+					var diffLng = lastPoint.lng - lastPoint.controlPoint.lng;
+					controlPoint = new L.latLng(lastPoint.lat + diffLat, lastPoint.lng + diffLng);
+				}
+
+				bound.extend(controlPoint);
+				bound.extend(endPoint);
+
+				endPoint.controlPoint = controlPoint;
+				lastPoint = endPoint;
+			}else{
+				bound.extend(coord);
+				lastPoint = new L.latLng(coord[0], coord[1]);
+			}
+		}
+		return bound;
+	},
+	
+	//TODO: use a centroid algorithm instead
+	getCenter: function () {
+		return this._bounds.getCenter();
+	},
+	
+	_update: function(){
+		if (!this._map) { return; }
+		
+		this._updatePath();
+	},
+	
+	_updatePath: function() {
+		this._renderer._updatecurve(this);
+	},
+
+	_project: function() {
+		var coord, lastCoord, curCommand, curPoint;
+
+		this._points = [];
+		
+		for(var i = 0; i < this._coords.length; i++){
+			coord = this._coords[i];
+			if(typeof coord == 'string' || coord instanceof String){
+				this._points.push(coord);
+				curCommand = coord;
+			}else {
+				switch(coord.length){
+					case 2:
+						curPoint = this._map.latLngToLayerPoint(coord);
+						lastCoord = coord;
+					break;
+					case 1:
+						if(curCommand == 'H'){
+							curPoint = this._map.latLngToLayerPoint([lastCoord[0], coord[0]]);
+							lastCoord = [lastCoord[0], coord[0]];
+						}else{
+							curPoint = this._map.latLngToLayerPoint([coord[0], lastCoord[1]]);
+							lastCoord = [coord[0], lastCoord[1]];
+						}
+					break;
+				}
+				this._points.push(curPoint);
+			}
+		}
+	}	
+});
+
+L.curve = function (path, options){
+	return new L.Curve(path, options);
+};
+
+L.SVG.include({
+	_updatecurve: function(layer){
+		this._setPath(layer, this._curvePointsToPath(layer._points));
+    	},
+ 	_curvePointsToPath: function(points){
+		var point, curCommand, str = '';
+		for(var i = 0; i < points.length; i++){
+			point = points[i];
+			if(typeof point == 'string' || point instanceof String){
+				curCommand = point;
+				str += curCommand;
+			}else{
+				switch(curCommand){
+					case 'H':
+						str += point.x + ' ';
+						break;
+					case 'V':
+						str += point.y + ' ';
+						break;
+					default:
+						str += point.x + ',' + point.y + ' ';
+						break;
+				}
+			}
+		}
+		return str || 'M0 0';
+	}
+});
+
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+/*
  *  Power BI Visual CLI
  *
  *  Copyright (c) Microsoft Corporation
@@ -48,44 +719,237 @@ var powerbi;
         (function (visual) {
             var PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF;
             (function (PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF) {
+                var labelSelector = ".connection-map-label";
+                var labelClassName = "connection-map-label";
                 var Visual = (function () {
                     function Visual(options) {
+                        this.isDataValid = false;
                         this.init(options);
                     }
                     Visual.prototype.init = function (options) {
-                        // add LeafletJS map DIV tag
-                        this.target = options.element;
-                        this.clientHeight = options.element.clientHeight;
-                        this.clientWidth = options.element.clientWidth;
-                        this.lines = L.featureGroup();
-                        this.markers = L.featureGroup();
+                        this.selectionManager = options.host.createSelectionManager();
+                        this.host = options.host;
+                        this.targetHtmlElement = options.element;
+                        this.addMapDivToDocument();
+                        this.hostContainer = $(this.targetHtmlElement).css('overflow-x', 'hidden');
+                        this.initMap();
+                    };
+                    Visual.prototype.enumerateObjectInstances = function (options) {
+                        var objectName = options.objectName;
+                        var objectEnumeration = [];
+                        switch (objectName) {
+                            case 'routes':
+                                objectEnumeration.push({
+                                    objectName: objectName,
+                                    displayName: "Routes",
+                                    properties: {
+                                        arcColor: this.settings.routes.getArcColor(),
+                                        labelFontColor: this.settings.routes.getLabelFontColor(),
+                                        showOutOfMapMarkerLabels: this.settings.routes.showOutOfMapMarkerLabels
+                                    },
+                                    selector: null
+                                });
+                                break;
+                        }
+                        ;
+                        return objectEnumeration;
+                    };
+                    Visual.prototype.mapGotActiveSelections = function () {
+                        return this.selectionManager.hasSelection();
+                    };
+                    Visual.prototype.addMapDivToDocument = function () {
                         var div = document.createElement('div');
                         div.setAttribute("id", "map");
                         div.setAttribute("style", "height:550px");
                         div.setAttribute("class", "none");
-                        this.target.appendChild(div);
-                        this.hostContainer = $(this.target).css('overflow-x', 'hidden');
-                        this.createMap();
+                        this.targetHtmlElement.appendChild(div);
                     };
-                    Visual.prototype.createMap = function () {
-                        this.map = L.map('map').setView([51.4707017, -0.4608747], 14);
-                        var Esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-                            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
-                        });
-                        this.map.addLayer(Esri_WorldStreetMap);
+                    Visual.prototype.initMap = function () {
+                        this.map = L.map('map').setView([33.9415839, -118.4435494], 3);
+                        //add map tile
+                        var layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+                            maxZoom: 18
+                        }).addTo(this.map);
+                        this.connectionMapDataView = {
+                            markers: {},
+                            arcs: {},
+                            arcsLayer: L.featureGroup(),
+                            markersLayer: L.featureGroup(),
+                            labelsLayer: L.featureGroup()
+                        };
+                        this.setMapHandlers();
                     };
                     Visual.prototype.update = function (options) {
-                        // handle resize              
-                        if (options.type == powerbi.VisualUpdateType.Data) {
+                        // render new data if dataset was changed
+                        if (options.type == powerbi.VisualUpdateType.Data || options.type == powerbi.VisualUpdateType.All) {
                             var dataView = options
                                 && options.dataViews
                                 && options.dataViews[0];
-                            this.connectionMapDataView = this.converter(dataView);
                             this.clearMap();
+                            this.connectionMapDataView = this.converter(dataView);
                             this.render();
                         }
                         this.map.invalidateSize();
                         this.updateContainerViewports(options.viewport);
+                    };
+                    Visual.prototype.parseSettings = function (dataView) {
+                        return PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF.ConnectionMapSettings.parse(dataView);
+                    };
+                    // returns:
+                    // 0 - marker isn't on the line
+                    // 1 - marker is in the end of the line
+                    // -1 - marker is at the beginning of the line
+                    Visual.prototype.isMarkerOnTheLine = function (coords, markerPoint) {
+                        if (!coords || coords.length === 0)
+                            return 0;
+                        if (coords[0].lat.toFixed(5) === markerPoint.lat.toFixed(5) &&
+                            (coords[0].lng.toFixed(5) === markerPoint.lng.toFixed(5) || ((Math.abs(+coords[0].lng.toFixed(5)) + Math.abs(+markerPoint.lng.toFixed(5)) - 360) < 2)))
+                            return -1;
+                        else if (coords[coords.length - 1].lat.toFixed(5) === markerPoint.lat.toFixed(5) &&
+                            (coords[coords.length - 1].lng.toFixed(5) === markerPoint.lng.toFixed(5) || ((Math.abs(+coords[coords.length - 1].lat.toFixed(5)) + Math.abs(+markerPoint.lat.toFixed(5)) - 360) < 2)))
+                            return 1;
+                        else
+                            return 0;
+                    };
+                    ;
+                    Visual.prototype.isCoordVisible = function (latLng) {
+                        var bounds = this.map.getBounds();
+                        return latLng && latLng.lat < bounds.getNorth() &&
+                            latLng.lat > bounds.getSouth() &&
+                            latLng.lng > bounds.getWest() &&
+                            latLng.lng < bounds.getEast();
+                    };
+                    Visual.prototype.shiftPointToShowLabelCorrectly = function (nearestVisiblePoint) {
+                        var pixelMaxOffset = 20, mapBorders = this.map.getPixelBounds(), point = this.map.project(nearestVisiblePoint);
+                        var offsetX = 0, offsetY = 0;
+                        if (Math.abs(point.y - mapBorders.min.y) < pixelMaxOffset) {
+                            // point is on the top edge
+                            offsetY = 10;
+                        }
+                        if (Math.abs(point.x - mapBorders.max.x) < pixelMaxOffset) {
+                            // point is on the right edge
+                            offsetX = -50;
+                        }
+                        if (Math.abs(point.x - mapBorders.min.x) < pixelMaxOffset) {
+                            // point is on the left edge
+                            offsetX = 10;
+                        }
+                        if (Math.abs(point.y - mapBorders.max.y) < pixelMaxOffset) {
+                            // point is on the bottom edge
+                            offsetY = -20;
+                        }
+                        point.x = point.x + offsetX;
+                        point.y = point.y + offsetY;
+                        return this.map.unproject(point);
+                    };
+                    Visual.prototype.midpointTo = function (pointFrom, pointTo) {
+                        //geodesic middle point
+                        /*var a1 = pointFrom.lat * Math.PI / 180, b1 = pointFrom.lng * Math.PI / 180;
+                        var a2 = pointTo.lat * Math.PI / 180, b2 = pointTo.lng * Math.PI / 180;
+            
+                        if (Math.abs(b2-b1) > Math.PI) b1 += 2*Math.PI; // crossing anti-meridian
+            
+                        var a3 = (a1+a2)/2;
+                        var f1 = Math.tan(Math.PI/4 + a1/2);
+                        var f2 = Math.tan(Math.PI/4 + a2/2);
+                        var f3 = Math.tan(Math.PI/4 + a3/2);
+                        var b3 = ((b2-b1)*Math.log(f3) + b1*Math.log(f2) - b2*Math.log(f1) ) / Math.log(f2/f1);
+            
+                        if (!isFinite(b3)) b3 = (b1+b2)/2; // parallel of latitude
+            
+                        var p = L.latLng((a3 * 180 / Math.PI), (b3 * 180 / Math.PI + 540) % 360 - 180); // normalise to −180..+180°*/
+                        return L.latLng((pointFrom.lat + pointTo.lat) / 2, (pointFrom.lng + pointTo.lng) / 2);
+                    };
+                    ;
+                    Visual.prototype.getRoot = function (angleCoeficient, radianLatitude, radianLongitude, distance) {
+                        var x0 = radianLatitude;
+                        var y0 = radianLongitude;
+                        var k1 = angleCoeficient;
+                        var k2 = -k1 * x0 + y0;
+                        var a = k1 * k1 + 1;
+                        var b = 2 * k1 * k2 - 2 * x0 - 2 * k1 * y0;
+                        var c = x0 * x0 + k2 * k2 - 2 * y0 * k2 + y0 * y0 - distance * distance;
+                        var d = b * b - 4 * a * c;
+                        var x1 = -b / (2 * a) - Math.sqrt(d) / (2 * a);
+                        var x2 = -b / (2 * a) + Math.sqrt(d) / (2 * a);
+                        var rootArray = [];
+                        rootArray.push(x1);
+                        rootArray.push(x2);
+                        return rootArray;
+                    };
+                    Visual.prototype.getSpecialPointLatLng = function (fromLatLng, toLatLng, midLatLng) {
+                        var midLatRadian = midLatLng.lat * Math.PI / 180;
+                        var midLngRadian = midLatLng.lng * Math.PI / 180;
+                        var ang1 = (toLatLng.lng - fromLatLng.lng) / (toLatLng.lat - fromLatLng.lat);
+                        var ang2 = -(toLatLng.lat - fromLatLng.lat) / (toLatLng.lng - fromLatLng.lng);
+                        var deltaLat = toLatLng.lat - midLatLng.lat;
+                        var deltaLng = toLatLng.lng - midLatLng.lng;
+                        var distance = Math.sqrt(deltaLat * deltaLat + deltaLng * deltaLng) * Math.PI / 180;
+                        distance = distance > 0.5 ? distance / 2 : distance;
+                        var latitudes = this.getRoot(ang2, midLatRadian, midLngRadian, distance);
+                        var lat = fromLatLng.lat > 0 && toLatLng.lat > 0 ? latitudes[1] : latitudes[0];
+                        var long = ((ang2 * (lat - midLatRadian) + midLngRadian) * 180 / Math.PI + 540) % 360 - 180;
+                        return L.latLng(lat * 180 / Math.PI, long);
+                    };
+                    Visual.prototype.createCurvedLine = function (pointFrom, pointTo, market, settings, distanceCoef) {
+                        var l = L;
+                        var midpoint = this.midpointTo(pointFrom, pointTo);
+                        var specialPoint = this.getSpecialPointLatLng(pointFrom, pointTo, midpoint);
+                        var curve = l.curve(['M', [pointFrom.lat, pointFrom.lng],
+                            'Q', [specialPoint.lat, specialPoint.lng],
+                            [pointTo.lat, pointTo.lng]], { color: settings.routes.getArcColor() });
+                        return curve;
+                    };
+                    Visual.prototype.createMarkerDirectionLabels = function (marker, arcs, title) {
+                        var markerPoint = marker.getLatLng(), isMarkerInvisible = !this.isCoordVisible(markerPoint), nearestVisiblePoints = [], labelLayer = L.featureGroup();
+                        if (isMarkerInvisible) {
+                            for (var item in arcs) {
+                                var connectionMapArc = arcs[item], coords = connectionMapArc.arc.getLatLngs();
+                                var isMarkerOnThePolyline = this.isMarkerOnTheLine(coords, markerPoint);
+                                if (isMarkerOnThePolyline === 0)
+                                    continue;
+                                if (isMarkerOnThePolyline === -1) {
+                                    for (var index in coords) {
+                                        if (this.isCoordVisible(coords[index])) {
+                                            nearestVisiblePoints.push(coords[index]);
+                                            break;
+                                        }
+                                    }
+                                }
+                                else if (isMarkerOnThePolyline === 1) {
+                                    for (var j = coords.length - 1; j >= 0; j--) {
+                                        if (this.isCoordVisible(coords[j])) {
+                                            nearestVisiblePoints.push(coords[j]);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        var labels = [];
+                        for (var i = 0; i < nearestVisiblePoints.length; i++) {
+                            var nearestVisiblePoint = this.shiftPointToShowLabelCorrectly(nearestVisiblePoints[i]);
+                            var label = L.divIcon({ className: 'connection-map-direction-label', html: title });
+                            labels.push(L.marker(nearestVisiblePoint, { icon: label }));
+                        }
+                        return labels;
+                    };
+                    Visual.prototype.createMarkersDirectionLabels = function (markerList) {
+                        var outOfBorderLabels = [];
+                        for (var item in markerList) {
+                            var markerWithArcs = markerList[item];
+                            var newLabels = this.createMarkerDirectionLabels(markerWithArcs.marker, markerWithArcs.arcs, markerWithArcs.airportCode);
+                            newLabels.forEach(function (item) {
+                                outOfBorderLabels.push(item);
+                            });
+                        }
+                        return outOfBorderLabels;
+                    };
+                    Visual.prototype.addMarkersToLayer = function (markers, layer) {
+                        markers.forEach(function (item) {
+                            layer.addLayer(item);
+                        });
                     };
                     Visual.prototype.updateContainerViewports = function (viewport) {
                         // handle resize            
@@ -99,77 +963,351 @@ var powerbi;
                         document.getElementById('map').style.width = viewport.width.toString() + "px";
                         document.getElementById('map').style.height = viewport.height.toString() + "px";
                     };
-                    Visual.prototype.render = function () {
-                        var _this = this;
-                        this.connectionMapDataView.destinations.forEach(function (item, index) {
-                            var fromLatLng = L.latLng(item.latitudeFrom, item.longitudeFrom), toLatLng = L.latLng(item.latitudeTo, item.longitudeTo);
-                            var l = L;
-                            var markerFrom = l.marker(fromLatLng), markerTo = l.marker(toLatLng);
-                            _this.markers.addLayer(markerFrom);
-                            _this.markers.addLayer(markerTo);
-                            var line = l.Polyline.Arc(fromLatLng, toLatLng, {
-                                color: 'red',
-                                vertices: 300
-                            });
-                            _this.lines.addLayer(line);
+                    Visual.prototype.setPopupToElement = function (content, element) {
+                        if (!content) {
+                            return;
+                        }
+                        element.bindPopup(content, { autoPan: false });
+                        var map = this.map;
+                        element.on("mouseover", function (e) {
+                            this.openPopup(this, e.latlng);
                         });
-                        this.map.addLayer(this.lines);
-                        this.map.addLayer(this.markers);
+                        element.on('mouseout', function (e) {
+                            if (this.getPopup().getContent()) {
+                                this.closePopup();
+                            }
+                        });
+                    };
+                    Visual.prototype.setLabelToElement = function (content, element) {
+                        element.bindTooltip(content, { permanent: true, className: "connection-map-label", offset: [0, 0] });
+                    };
+                    Visual.prototype.setSelectionStyle = function (selected, element) {
+                        var opacity = selected ? 1 : 0.3;
+                        element.setStyle({
+                            opacity: opacity,
+                            fillOpacity: opacity
+                        });
+                    };
+                    Visual.prototype.unselectAll = function () {
+                        var markers = this.connectionMapDataView.markers;
+                        var arcs = this.connectionMapDataView.arcs;
+                        for (var item in arcs) {
+                            arcs[item].isSelected = false;
+                            this.setSelectionStyle(true, arcs[item].arc);
+                        }
+                        for (var item in markers) {
+                            markers[item].isSelected = false;
+                            this.setSelectionStyle(true, markers[item].marker);
+                        }
+                    };
+                    Visual.prototype.setOnMarkerClickEvent = function (element) {
+                        var me = this;
+                        element.on('click', function (e) {
+                            var _this = this;
+                            var markers = me.connectionMapDataView.markers;
+                            var arcs = me.connectionMapDataView.arcs;
+                            var arcSelectionIds = [];
+                            var connectionMapMarker;
+                            for (var item in markers) {
+                                if (markers[item].marker === this) {
+                                    connectionMapMarker = markers[item];
+                                    break;
+                                }
+                            }
+                            var isMultipleSelection = e.originalEvent.ctrlKey;
+                            if (!connectionMapMarker || (connectionMapMarker.isSelected && !isMultipleSelection)) {
+                                return;
+                            }
+                            connectionMapMarker.arcs.map(function (value) {
+                                if (!connectionMapMarker.isSelected || value.isSelected) {
+                                    arcSelectionIds.push(value.selectionId);
+                                }
+                            });
+                            me.selectionManager.select(arcSelectionIds, isMultipleSelection).then(function (ids) {
+                                if (!isMultipleSelection) {
+                                    for (var item in arcs) {
+                                        arcs[item].isSelected = false;
+                                        me.setSelectionStyle(false, arcs[item].arc);
+                                    }
+                                    for (var item in markers) {
+                                        if (markers[item].marker !== _this) {
+                                            markers[item].isSelected = false;
+                                            me.setSelectionStyle(false, markers[item].marker);
+                                        }
+                                    }
+                                }
+                                connectionMapMarker.isSelected = !connectionMapMarker.isSelected;
+                                me.setSelectionStyle(connectionMapMarker.isSelected, connectionMapMarker.marker);
+                                connectionMapMarker.arcs.forEach(function (item) {
+                                    if (item.isSelected !== connectionMapMarker.isSelected) {
+                                        item.isSelected = connectionMapMarker.isSelected;
+                                        me.setSelectionStyle(item.isSelected, item.arc);
+                                        item.markers.forEach(function (marker) {
+                                            if (marker !== connectionMapMarker) {
+                                                marker.isSelected = connectionMapMarker.isSelected;
+                                                me.setSelectionStyle(marker.isSelected, marker.marker);
+                                            }
+                                        });
+                                    }
+                                });
+                            });
+                        });
+                    };
+                    Visual.prototype.setOnArcClickEvent = function (element) {
+                        var me = this;
+                        element.on('click', function (e) {
+                            var _this = this;
+                            e.originalEvent.preventDefault();
+                            var markers = me.connectionMapDataView.markers;
+                            var arcs = me.connectionMapDataView.arcs;
+                            var connectionMapArc;
+                            for (var item in arcs) {
+                                if (arcs[item].arc === this) {
+                                    connectionMapArc = arcs[item];
+                                    break;
+                                }
+                            }
+                            var isMultipleSelection = e.originalEvent.ctrlKey;
+                            if (!connectionMapArc || (connectionMapArc.isSelected && !isMultipleSelection)) {
+                                return;
+                            }
+                            var selectedId = connectionMapArc.selectionId;
+                            me.selectionManager.select(selectedId, isMultipleSelection).then(function (ids) {
+                                if (!isMultipleSelection) {
+                                    for (var item in markers) {
+                                        markers[item].isSelected = false;
+                                        me.setSelectionStyle(false, markers[item].marker);
+                                    }
+                                    for (var item in arcs) {
+                                        if (arcs[item].arc !== _this) {
+                                            arcs[item].isSelected = false;
+                                            me.setSelectionStyle(false, arcs[item].arc);
+                                        }
+                                    }
+                                }
+                                connectionMapArc.isSelected = !connectionMapArc.isSelected;
+                                me.setSelectionStyle(connectionMapArc.isSelected, connectionMapArc.arc);
+                                connectionMapArc.markers.forEach(function (item) {
+                                    var markerGotSelectedElements = false;
+                                    for (var i in item.arcs) {
+                                        if (item.arcs[i].isSelected == true) {
+                                            markerGotSelectedElements = true;
+                                            break;
+                                        }
+                                    }
+                                    if (markerGotSelectedElements !== item.isSelected) {
+                                        item.isSelected = !item.isSelected;
+                                        me.setSelectionStyle(item.isSelected, item.marker);
+                                    }
+                                });
+                            });
+                        });
+                    };
+                    Visual.prototype.createCustomizableArc = function (fromLatLng, toLatLng, settings) {
+                        var l = L;
+                        var arc = l.Polyline.Arc(fromLatLng, toLatLng, {
+                            color: settings.routes.getArcColor(),
+                            vertices: 250
+                        });
+                        return arc;
+                    };
+                    Visual.prototype.createCustomizableMarker = function (latLng, settings) {
+                        var marker = L.circleMarker(latLng, {
+                            color: "blue",
+                            fillColor: "blue",
+                            fillOpacity: 1,
+                            radius: 5
+                        });
+                        return marker;
+                    };
+                    Visual.prototype.setLabelFontColor = function (color) {
+                        $(labelSelector).css("color", color);
+                    };
+                    Visual.prototype.render = function () {
+                        this.map.addLayer(this.connectionMapDataView.arcsLayer);
+                        this.map.addLayer(this.connectionMapDataView.markersLayer);
+                        this.map.addLayer(this.connectionMapDataView.labelsLayer);
+                        this.setLabelFontColor(this.settings.routes.getLabelFontColor());
                     };
                     Visual.prototype.clearMap = function () {
-                        this.lines.clearLayers();
+                        var dataView = this.connectionMapDataView;
+                        if (dataView && dataView.arcsLayer && dataView.markersLayer && dataView.labelsLayer) {
+                            dataView.arcsLayer.clearLayers();
+                            dataView.markersLayer.clearLayers();
+                            dataView.labelsLayer.clearLayers();
+                        }
+                    };
+                    Visual.prototype.parseDataViewToDirections = function (dataView) {
+                        var directions = [];
+                        var marketCategory = dataView.categorical.categories[0];
+                        var codesFrom = dataView.categorical.categories[1].values, codesTo = dataView.categorical.categories[2].values, markets = dataView.categorical.categories[0].values;
+                        var latsFrom = dataView.categorical.values[0].values, latsTo = dataView.categorical.values[2].values, longsFrom = dataView.categorical.values[1].values, longsTo = dataView.categorical.values[3].values;
+                        var tooltipColumns = [];
+                        for (var i in dataView.categorical.values) {
+                            var column = dataView.categorical.values[i];
+                            if (column.source && column.source.roles["tooltips"]) {
+                                tooltipColumns.push(column);
+                            }
+                        }
+                        var tooltips = [];
+                        if (tooltipColumns.length > 0) {
+                            for (var k = 0; k < tooltipColumns[0].values.length; ++k) {
+                                var tooltip = tooltipColumns[0].source.displayName + ": " + tooltipColumns[0].values[k];
+                                for (var j = 1; j < tooltipColumns.length; ++j) {
+                                    tooltip += "<br>" + tooltipColumns[j].source.displayName + ": " + tooltipColumns[j].values[k];
+                                }
+                                tooltips.push(tooltip);
+                            }
+                        }
+                        markets.forEach(function (item, index) {
+                            directions.push({
+                                market: markets[index],
+                                index: index,
+                                airportCodeFrom: codesFrom[index],
+                                airportCodeTo: codesTo[index],
+                                latitudeFrom: latsFrom[index],
+                                longitudeFrom: longsFrom[index],
+                                latitudeTo: latsTo[index],
+                                longitudeTo: longsTo[index],
+                                tooltip: tooltips[index]
+                            });
+                        });
+                        return directions;
+                    };
+                    Visual.prototype.createConnectionMapArc = function (direction, settings, selectionCategoryColumn) {
+                        var fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom), toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo);
+                        var airportCodeFrom = direction.airportCodeFrom, airportCodeTo = direction.airportCodeTo;
+                        //let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
+                        var arc = this.createCurvedLine(fromLatLng, toLatLng, direction.market, settings);
+                        this.setPopupToElement(direction.tooltip, arc);
+                        this.setOnArcClickEvent(arc);
+                        var selectionId = this.host.createSelectionIdBuilder()
+                            .withCategory(selectionCategoryColumn, direction.index)
+                            .createSelectionId();
+                        return {
+                            arc: arc,
+                            markers: [],
+                            isSelected: false,
+                            selectionId: selectionId
+                        };
+                    };
+                    Visual.prototype.createConnectionMapMarker = function (direction, isDestinationPoint, latLng, settings) {
+                        var marker = this.createCustomizableMarker(latLng, settings);
+                        var label = isDestinationPoint ? direction.airportCodeTo : direction.airportCodeFrom;
+                        this.setLabelToElement(label, marker);
+                        var lat = isDestinationPoint ? direction.latitudeTo : direction.latitudeFrom;
+                        var long = isDestinationPoint ? direction.longitudeTo : direction.longitudeFrom;
+                        var popupMessage = "Lat: " + lat + "<br>Long: " + long;
+                        this.setPopupToElement(popupMessage, marker);
+                        this.setOnMarkerClickEvent(marker);
+                        return {
+                            marker: marker,
+                            arcs: [],
+                            airportCode: direction.airportCodeFrom,
+                            isSelected: false
+                        };
                     };
                     Visual.prototype.converter = function (dataView) {
+                        this.isDataValid = false;
+                        var settings = this.settings = this.parseSettings(dataView);
                         if (!dataView
                             || !dataView.categorical
                             || !dataView.categorical.categories
                             || !dataView.categorical.categories[0]
                             || !dataView.categorical.categories[1]
                             || !dataView.categorical.categories[2]
-                            || !dataView.categorical.categories[3]
-                            || !dataView.categorical.categories[4]
                             || !dataView.categorical.categories[0].values
                             || !dataView.categorical.categories[1].values
                             || !dataView.categorical.categories[2].values
-                            || !dataView.categorical.categories[3].values
-                            || !dataView.categorical.categories[4].values
                             || !dataView.categorical.values
                             || !dataView.categorical.values[0]
                             || !dataView.categorical.values[1]
                             || !dataView.categorical.values[2]
                             || !dataView.categorical.values[3]) {
                             return {
-                                destinations: []
+                                arcs: {},
+                                arcsLayer: L.featureGroup(),
+                                markers: {},
+                                markersLayer: L.featureGroup(),
+                                labelsLayer: L.featureGroup()
                             };
                         }
-                        debugger;
-                        var destinationsPreData = {};
-                        var codesFrom = dataView.categorical.categories[2].values, codesTo = dataView.categorical.categories[4].values, namesFrom = dataView.categorical.categories[1].values, namesTo = dataView.categorical.categories[3].values, flightNumbers = dataView.categorical.categories[0].values;
-                        var latsFrom = dataView.categorical.values[0].values, latsTo = dataView.categorical.values[2].values, longsFrom = dataView.categorical.values[1].values, longsTo = dataView.categorical.values[3].values;
-                        codesFrom.forEach(function (item, index) {
-                            var codeFrom = item, codeTo = codesTo[index];
-                            var key = (codeFrom + codeTo) < (codeTo + codeFrom) ? (codeFrom + codeTo) : (codeTo + codeFrom);
-                            if (!destinationsPreData[key]) {
-                                destinationsPreData[key] = {
-                                    key: key,
-                                    airportNameFrom: namesFrom[index],
-                                    latitudeFrom: latsFrom[index],
-                                    longitudeFrom: longsFrom[index],
-                                    airportNameTo: namesTo[index],
-                                    latitudeTo: latsTo[index],
-                                    longitudeTo: longsTo[index],
-                                    flightNumbers: []
-                                };
+                        var directions = this.parseDataViewToDirections(dataView);
+                        var marketCategory = dataView.categorical.categories[0];
+                        var processedArcs = {}, processedMarkers = {};
+                        var markersLayer = L.featureGroup(), arcsLayer = L.featureGroup(), labelsLayer = L.featureGroup();
+                        for (var item in directions) {
+                            var direction = directions[item];
+                            var keyArc = direction.market, keyFrom = direction.airportCodeFrom, keyTo = direction.airportCodeTo;
+                            var connectionMapArc = this.createConnectionMapArc(direction, settings, marketCategory);
+                            processedArcs[keyArc] = connectionMapArc;
+                            arcsLayer.addLayer(connectionMapArc.arc);
+                            var connectionMapMarkerFrom = void 0, connectionMapMarkerTo = void 0;
+                            if (!processedMarkers[keyFrom]) {
+                                var fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom);
+                                connectionMapMarkerFrom = this.createConnectionMapMarker(direction, false, fromLatLng, settings);
+                                processedMarkers[keyFrom] = connectionMapMarkerFrom;
+                                markersLayer.addLayer(connectionMapMarkerFrom.marker);
                             }
-                            destinationsPreData[key].flightNumbers.push(flightNumbers[index]);
-                        });
-                        var destinations = [];
-                        for (var key in destinationsPreData) {
-                            if (destinationsPreData.hasOwnProperty(key)) {
-                                destinations.push(destinationsPreData[key]);
+                            else {
+                                connectionMapMarkerFrom = processedMarkers[keyFrom];
                             }
+                            if (!processedMarkers[keyTo]) {
+                                var toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo);
+                                connectionMapMarkerTo = this.createConnectionMapMarker(direction, true, toLatLng, settings);
+                                processedMarkers[keyTo] = connectionMapMarkerTo;
+                                markersLayer.addLayer(connectionMapMarkerTo.marker);
+                            }
+                            else {
+                                connectionMapMarkerTo = processedMarkers[keyTo];
+                            }
+                            processedMarkers[keyFrom].arcs.push(connectionMapArc);
+                            processedMarkers[keyTo].arcs.push(connectionMapArc);
+                            processedArcs[keyArc].markers.push(connectionMapMarkerFrom);
+                            processedArcs[keyArc].markers.push(connectionMapMarkerTo);
                         }
-                        return { destinations: destinations };
+                        if (this.settings.routes.showOutOfMapMarkerLabels) {
+                        }
+                        this.isDataValid = true;
+                        return {
+                            arcs: processedArcs,
+                            markers: processedMarkers,
+                            markersLayer: markersLayer,
+                            arcsLayer: arcsLayer,
+                            labelsLayer: labelsLayer
+                        };
+                    };
+                    Visual.prototype.handleMove = function () {
+                        if (!this.isDataValid) {
+                            return;
+                        }
+                        var markers = this.connectionMapDataView.markers;
+                        var labelsLayer = this.connectionMapDataView.labelsLayer;
+                        labelsLayer.clearLayers();
+                        var showLayers = this.settings.routes.showOutOfMapMarkerLabels;
+                        if (showLayers) {
+                        }
+                    };
+                    Visual.prototype.setMapHandlers = function () {
+                        var me = this;
+                        this.map.on('zoom', function (e) {
+                            me.handleMove();
+                        });
+                        this.map.on('moveend', function (e) {
+                            me.handleMove();
+                        });
+                        this.map.on('click', function (e) {
+                            var multipleSelection = e.originalEvent.ctrlKey;
+                            var defaultPrevented = e.originalEvent.defaultPrevented;
+                            if (multipleSelection || defaultPrevented) {
+                                return;
+                            }
+                            if (me.mapGotActiveSelections()) {
+                                me.selectionManager.clear().then(function () {
+                                    me.unselectAll();
+                                });
+                            }
+                        });
                     };
                     return Visual;
                 }());
@@ -203,6 +1341,261 @@ var powerbi;
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
+/*
+ *  Power BI Visualizations
+ *
+ *  Copyright (c) Microsoft Corporation
+ *  All rights reserved.
+ *  MIT License
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the ""Software""), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+var powerbi;
+(function (powerbi) {
+    var extensibility;
+    (function (extensibility) {
+        var visual;
+        (function (visual) {
+            var PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF;
+            (function (PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF) {
+                var DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
+                var ConnectionMapMarkerSettings = (function () {
+                    function ConnectionMapMarkerSettings() {
+                        this.fill = "red";
+                    }
+                    return ConnectionMapMarkerSettings;
+                }());
+                PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF.ConnectionMapMarkerSettings = ConnectionMapMarkerSettings;
+                var CustomColor = (function () {
+                    function CustomColor(color) {
+                        this.solid = { color: color };
+                    }
+                    return CustomColor;
+                }());
+                PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF.CustomColor = CustomColor;
+                var ConnectionMapRoutesSettings = (function () {
+                    function ConnectionMapRoutesSettings() {
+                        this.arcColor = new CustomColor("red");
+                        this.labelFontColor = new CustomColor("black");
+                        this.showOutOfMapMarkerLabels = true;
+                    }
+                    ConnectionMapRoutesSettings.prototype.getArcColor = function () {
+                        return this.arcColor.solid.color;
+                    };
+                    ConnectionMapRoutesSettings.prototype.getLabelFontColor = function () {
+                        return this.labelFontColor.solid.color;
+                    };
+                    return ConnectionMapRoutesSettings;
+                }());
+                PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF.ConnectionMapRoutesSettings = ConnectionMapRoutesSettings;
+                var ConnectionMapSettings = (function (_super) {
+                    __extends(ConnectionMapSettings, _super);
+                    function ConnectionMapSettings() {
+                        _super.apply(this, arguments);
+                        this.routes = new ConnectionMapRoutesSettings();
+                    }
+                    return ConnectionMapSettings;
+                }(DataViewObjectsParser));
+                PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF.ConnectionMapSettings = ConnectionMapSettings;
+            })(PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF = visual.PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF || (visual.PBI_CV_DD900773_4713_45DE_BE5F_77B59D33F7DF = {}));
+        })(visual = extensibility.visual || (extensibility.visual = {}));
+    })(extensibility = powerbi.extensibility || (powerbi.extensibility = {}));
+})(powerbi || (powerbi = {}));
+/*
+ * Leaflet.curve v0.1.0 - a plugin for Leaflet mapping library. https://github.com/elfalem/Leaflet.curve
+ * (c) elfalem 2015
+ */
+/*
+ * note that SVG (x, y) corresponds to (long, lat)
+ */
+L.Curve = L.Path.extend({
+    options: {},
+    initialize: function (path, options) {
+        L.setOptions(this, options);
+        this._setPath(path);
+    },
+    getPath: function () {
+        return this._coords;
+    },
+    setPath: function (path) {
+        this._setPath(path);
+        return this.redraw();
+    },
+    getBounds: function () {
+        return this._bounds;
+    },
+    _setPath: function (path) {
+        this._coords = path;
+        this._bounds = this._computeBounds();
+    },
+    _computeBounds: function () {
+        var bound = new L.LatLngBounds();
+        var lastPoint;
+        var lastCommand;
+        for (var i = 0; i < this._coords.length; i++) {
+            coord = this._coords[i];
+            if (typeof coord == 'string' || coord instanceof String) {
+                lastCommand = coord;
+            }
+            else if (lastCommand == 'H') {
+                bound.extend([lastPoint.lat, coord[0]]);
+                lastPoint = new L.latLng(lastPoint.lat, coord[0]);
+            }
+            else if (lastCommand == 'V') {
+                bound.extend([coord[0], lastPoint.lng]);
+                lastPoint = new L.latLng(coord[0], lastPoint.lng);
+            }
+            else if (lastCommand == 'C') {
+                var controlPoint1 = new L.latLng(coord[0], coord[1]);
+                coord = this._coords[++i];
+                var controlPoint2 = new L.latLng(coord[0], coord[1]);
+                coord = this._coords[++i];
+                var endPoint = new L.latLng(coord[0], coord[1]);
+                bound.extend(controlPoint1);
+                bound.extend(controlPoint2);
+                bound.extend(endPoint);
+                endPoint.controlPoint1 = controlPoint1;
+                endPoint.controlPoint2 = controlPoint2;
+                lastPoint = endPoint;
+            }
+            else if (lastCommand == 'S') {
+                var controlPoint2 = new L.latLng(coord[0], coord[1]);
+                coord = this._coords[++i];
+                var endPoint = new L.latLng(coord[0], coord[1]);
+                var controlPoint1 = lastPoint;
+                if (lastPoint.controlPoint2) {
+                    var diffLat = lastPoint.lat - lastPoint.controlPoint2.lat;
+                    var diffLng = lastPoint.lng - lastPoint.controlPoint2.lng;
+                    controlPoint1 = new L.latLng(lastPoint.lat + diffLat, lastPoint.lng + diffLng);
+                }
+                bound.extend(controlPoint1);
+                bound.extend(controlPoint2);
+                bound.extend(endPoint);
+                endPoint.controlPoint1 = controlPoint1;
+                endPoint.controlPoint2 = controlPoint2;
+                lastPoint = endPoint;
+            }
+            else if (lastCommand == 'Q') {
+                var controlPoint = new L.latLng(coord[0], coord[1]);
+                coord = this._coords[++i];
+                var endPoint = new L.latLng(coord[0], coord[1]);
+                bound.extend(controlPoint);
+                bound.extend(endPoint);
+                endPoint.controlPoint = controlPoint;
+                lastPoint = endPoint;
+            }
+            else if (lastCommand == 'T') {
+                var endPoint = new L.latLng(coord[0], coord[1]);
+                var controlPoint = lastPoint;
+                if (lastPoint.controlPoint) {
+                    var diffLat = lastPoint.lat - lastPoint.controlPoint.lat;
+                    var diffLng = lastPoint.lng - lastPoint.controlPoint.lng;
+                    controlPoint = new L.latLng(lastPoint.lat + diffLat, lastPoint.lng + diffLng);
+                }
+                bound.extend(controlPoint);
+                bound.extend(endPoint);
+                endPoint.controlPoint = controlPoint;
+                lastPoint = endPoint;
+            }
+            else {
+                bound.extend(coord);
+                lastPoint = new L.latLng(coord[0], coord[1]);
+            }
+        }
+        return bound;
+    },
+    //TODO: use a centroid algorithm instead
+    getCenter: function () {
+        return this._bounds.getCenter();
+    },
+    _update: function () {
+        if (!this._map) {
+            return;
+        }
+        this._updatePath();
+    },
+    _updatePath: function () {
+        this._renderer._updatecurve(this);
+    },
+    _project: function () {
+        var coord, lastCoord, curCommand, curPoint;
+        this._points = [];
+        for (var i = 0; i < this._coords.length; i++) {
+            coord = this._coords[i];
+            if (typeof coord == 'string' || coord instanceof String) {
+                this._points.push(coord);
+                curCommand = coord;
+            }
+            else {
+                switch (coord.length) {
+                    case 2:
+                        curPoint = this._map.latLngToLayerPoint(coord);
+                        lastCoord = coord;
+                        break;
+                    case 1:
+                        if (curCommand == 'H') {
+                            curPoint = this._map.latLngToLayerPoint([lastCoord[0], coord[0]]);
+                            lastCoord = [lastCoord[0], coord[0]];
+                        }
+                        else {
+                            curPoint = this._map.latLngToLayerPoint([coord[0], lastCoord[1]]);
+                            lastCoord = [coord[0], lastCoord[1]];
+                        }
+                        break;
+                }
+                this._points.push(curPoint);
+            }
+        }
+    }
+});
+L.curve = function (path, options) {
+    return new L.Curve(path, options);
+};
+L.SVG.include({
+    _updatecurve: function (layer) {
+        this._setPath(layer, this._curvePointsToPath(layer._points));
+    },
+    _curvePointsToPath: function (points) {
+        var point, curCommand, str = '';
+        for (var i = 0; i < points.length; i++) {
+            point = points[i];
+            if (typeof point == 'string' || point instanceof String) {
+                curCommand = point;
+                str += curCommand;
+            }
+            else {
+                switch (curCommand) {
+                    case 'H':
+                        str += point.x + ' ';
+                        break;
+                    case 'V':
+                        str += point.y + ' ';
+                        break;
+                    default:
+                        str += point.x + ',' + point.y + ' ';
+                        break;
+                }
+            }
+        }
+        return str || 'M0 0';
+    }
+});
 var powerbi;
 (function (powerbi) {
     var visuals;
