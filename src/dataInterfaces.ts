@@ -25,37 +25,37 @@
  */
 
 module powerbi.extensibility.visual {
-    export interface ConnectionMapDataView {
-        markers: ConnectionMapMarkerList,
-        arcs: ConnectionMapArcList,
+    export interface RouteMapDataView {
+        markers: RouteMapMarkerList,
+        arcs: RouteMapArcList,
         arcsLayer: L.FeatureGroup,
         markersLayer: L.FeatureGroup,
         labelsLayer: L.FeatureGroup
     }
     
-    export interface ConnectionMapMarkerList {
-        [key: string]: ConnectionMapMarker;
+    export interface RouteMapMarkerList {
+        [key: string]: RouteMapMarker;
     }
     
-    export interface ConnectionMapArcList {
-        [key: string]: ConnectionMapArc;
+    export interface RouteMapArcList {
+        [key: string]: RouteMapArc;
     }
     
-    export interface ConnectionMapMarker {
+    export interface RouteMapMarker {
         marker: L.CircleMarker, 
         airportCode: string,
-        arcs: ConnectionMapArc[],
+        arcs: RouteMapArc[],
         isSelected: boolean
     }
     
-    export interface ConnectionMapArc {
+    export interface RouteMapArc {
         arc: L.Polyline, 
-        markers: ConnectionMapMarker[],
+        markers: RouteMapMarker[],
         isSelected: boolean,
         selectionId: ISelectionId
     }
     
-    export interface ConnectionMapAirport {
+    export interface RouteMapAirport {
         code: string,
         latitude: number,
         longitude: number

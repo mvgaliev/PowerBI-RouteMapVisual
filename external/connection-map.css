@@ -1,4 +1,4 @@
-.connection-map-direction-label {
+.route-map-direction-label {
     background: #fff;
     padding: 4px;
     border-radius: 4px;
@@ -8,7 +8,7 @@
     white-space: nowrap;
 }
 
-.connection-map-label {
+.route-map-label {
     background: transparent !important;
     padding: 4px;
     font-size: 13px;
@@ -18,7 +18,7 @@
     border-color: transparent !important;    
 }
 
-.leaflet-tooltip.connection-map-label  {
+.leaflet-tooltip.route-map-label  {
     background: transparent !important;
     background-color: transparent !important;
     border-color: transparent !important;
@@ -26,17 +26,17 @@
     box-shadow: none !important;
 }
 
-.leaflet-tooltip-left.connection-map-label,
-.leaflet-tooltip-right.connection-map-label {    
+.leaflet-tooltip-left.route-map-label,
+.leaflet-tooltip-right.route-map-label {    
     background: transparent;
     border: none;    
     background-color: transparent;
     border-color: transparent;
 }
 
-.connection-map-label.leaflet-tooltip-left:before {
+.route-map-label.leaflet-tooltip-left:before {
 	border-left-color: transparent;
 }
-.connection-map-label.leaflet-tooltip-right:before {
+.route-map-label.leaflet-tooltip-right:before {
 	border-right-color: transparent;
 }

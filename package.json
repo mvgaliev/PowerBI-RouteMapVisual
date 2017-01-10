@@ -1,5 +1,5 @@
 {
-  "name": "powerbi-visuals-connection-map",
+  "name": "powerbi-visuals-route-map",
   "devDependencies": {
     "@types/leaflet": "1.0.38",
     "powerbi-visuals-utils-dataviewutils": "^0.3.0"

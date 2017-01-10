@@ -27,7 +27,7 @@
 module powerbi.extensibility.visual {
     import DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
 
-    export class ConnectionMapMarkerSettings {
+    export class RouteMapMarkerSettings {
         public fill: string = "red";
     }
     
@@ -39,7 +39,7 @@ module powerbi.extensibility.visual {
         }
     }
 
-    export class ConnectionMapRoutesSettings {
+    export class RouteMapRoutesSettings {
         public arcColor: CustomColor = new CustomColor("red");
         public labelFontColor: CustomColor = new CustomColor("black");
         public showOutOfMapMarkerLabels: boolean = true;
@@ -53,7 +53,7 @@ module powerbi.extensibility.visual {
         }
     }
 
-    export class ConnectionMapSettings extends DataViewObjectsParser {
-        public routes: ConnectionMapRoutesSettings = new ConnectionMapRoutesSettings();
+    export class RouteMapSettings extends DataViewObjectsParser {
+        public routes: RouteMapRoutesSettings = new RouteMapRoutesSettings();
     }
 }

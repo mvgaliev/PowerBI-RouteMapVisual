@@ -28,11 +28,11 @@ module powerbi.extensibility.visual {
     import DataViewObjects = powerbi.DataViewObjects;
     import DataViewValueColumn = powerbi.DataViewValueColumn;
     
-    const labelSelector = ".connection-map-label";
-    const labelClassName = "connection-map-label";
+    const labelSelector = ".route-map-label";
+    const labelClassName = "route-map-label";
     export class Visual implements IVisual {
         
-        private connectionMapDataView: ConnectionMapDataView;
+        private routeMapDataView: RouteMapDataView;
         private targetHtmlElement: HTMLElement;
         private hostContainer: JQuery;
         private map: any;
@@ -41,7 +41,7 @@ module powerbi.extensibility.visual {
         private selectionManager: ISelectionManager;
         private host: IVisualHost;
 
-        private settings: ConnectionMapSettings;
+        private settings: RouteMapSettings;
 
         constructor(options: VisualConstructorOptions) {
             this.init(options);
@@ -104,7 +104,7 @@ module powerbi.extensibility.visual {
                         maxZoom: 18
             }).addTo(this.map);
 
-            this.connectionMapDataView = {
+            this.routeMapDataView = {
                 markers: {},
                 arcs: {},
                 arcsLayer: L.featureGroup(),
@@ -123,7 +123,7 @@ module powerbi.extensibility.visual {
                     && options.dataViews[0];
 
                 this.clearMap();
-                this.connectionMapDataView = this.converter(dataView);
+                this.routeMapDataView = this.converter(dataView);
                 this.render();
             }
 
@@ -131,8 +131,8 @@ module powerbi.extensibility.visual {
             this.updateContainerViewports(options.viewport);
         }
 
-        private parseSettings(dataView: DataView): ConnectionMapSettings {
-            return ConnectionMapSettings.parse<ConnectionMapSettings>(dataView);
+        private parseSettings(dataView: DataView): RouteMapSettings {
+            return RouteMapSettings.parse<RouteMapSettings>(dataView);
         }
 
         // returns:
@@ -259,7 +259,7 @@ module powerbi.extensibility.visual {
             return L.latLng(lat * 180/Math.PI, long);  
         }
         
-        private createCurvedLine(pointFrom: L.LatLng, pointTo: L.LatLng, market: string, settings: ConnectionMapSettings, distanceCoef?: number): L.Polyline {
+        private createCurvedLine(pointFrom: L.LatLng, pointTo: L.LatLng, market: string, settings: RouteMapSettings, distanceCoef?: number): L.Polyline {
             let l: any = L;
             
             let midpoint = this.midpointTo(pointFrom, pointTo);                    
@@ -273,7 +273,7 @@ module powerbi.extensibility.visual {
             return curve;
         }
 
-        private createMarkerDirectionLabels(marker: L.CircleMarker, arcs: ConnectionMapArc[], title: string): L.Marker[] {
+        private createMarkerDirectionLabels(marker: L.CircleMarker, arcs: RouteMapArc[], title: string): L.Marker[] {
             let markerPoint = marker.getLatLng(),
                 isMarkerInvisible = !this.isCoordVisible(markerPoint),
                 nearestVisiblePoints: L.LatLng[] = [],
@@ -282,8 +282,8 @@ module powerbi.extensibility.visual {
             if (isMarkerInvisible) {
 
                 for (var item in arcs) {
-                    let connectionMapArc = arcs[item],
-                        coords = connectionMapArc.arc.getLatLngs();
+                    let routeMapArc = arcs[item],
+                        coords = routeMapArc.arc.getLatLngs();
 
                     let isMarkerOnThePolyline = this.isMarkerOnTheLine(coords, markerPoint);
                     if (isMarkerOnThePolyline === 0)
@@ -310,14 +310,14 @@ module powerbi.extensibility.visual {
             let labels: L.Marker[] = [];
             for (var i = 0; i < nearestVisiblePoints.length; i++) {
                 let nearestVisiblePoint = this.shiftPointToShowLabelCorrectly(nearestVisiblePoints[i]);
-                let label = L.divIcon({ className: 'connection-map-direction-label', html: title });
+                let label = L.divIcon({ className: 'route-map-direction-label', html: title });
                 labels.push(L.marker(nearestVisiblePoint, { icon: label }));
             }
 
             return labels;
         }
 
-        private createMarkersDirectionLabels(markerList: ConnectionMapMarkerList): L.Marker[] {
+        private createMarkersDirectionLabels(markerList: RouteMapMarkerList): L.Marker[] {
             let outOfBorderLabels: L.Marker[] = [];
 
             for (var item in markerList) {
@@ -374,7 +374,7 @@ module powerbi.extensibility.visual {
         }
 
         private setLabelToElement(content: string, element: any): void {
-            element.bindTooltip(content, { permanent: true, className: "connection-map-label", offset: [0, 0] });
+            element.bindTooltip(content, { permanent: true, className: "route-map-label", offset: [0, 0] });
         }
 
         private setSelectionStyle(selected: boolean, element: L.Path): void {
@@ -387,8 +387,8 @@ module powerbi.extensibility.visual {
         }
 
         private unselectAll(): void {
-            let markers = this.connectionMapDataView.markers;
-            let arcs = this.connectionMapDataView.arcs;
+            let markers = this.routeMapDataView.markers;
+            let arcs = this.routeMapDataView.arcs;
 
             for (var item in arcs) {
                 arcs[item].isSelected = false;
@@ -405,28 +405,28 @@ module powerbi.extensibility.visual {
             let me = this;
 
             element.on('click', function (e) {                
-                let markers = me.connectionMapDataView.markers;
-                let arcs = me.connectionMapDataView.arcs;
+                let markers = me.routeMapDataView.markers;
+                let arcs = me.routeMapDataView.arcs;
                 
                 let arcSelectionIds: ISelectionId[] = [];
                 
-                let connectionMapMarker: ConnectionMapMarker;
+                let routeMapMarker: RouteMapMarker;
                 
                 for(var item in markers) {
                     if(markers[item].marker === this) {
-                        connectionMapMarker = markers[item];
+                        routeMapMarker = markers[item];
                         break;
                     }
                 } 
                 
                 let isMultipleSelection = (e as L.MouseEvent).originalEvent.ctrlKey;
                 
-                if(!connectionMapMarker || (connectionMapMarker.isSelected && !isMultipleSelection)) {
+                if(!routeMapMarker || (routeMapMarker.isSelected && !isMultipleSelection)) {
                     return;
                 }
                 
-                connectionMapMarker.arcs.map((value) => {
-                    if(!connectionMapMarker.isSelected || value.isSelected) {
+                routeMapMarker.arcs.map((value) => {
+                    if(!routeMapMarker.isSelected || value.isSelected) {
                         arcSelectionIds.push(value.selectionId);
                     }
                 });
@@ -447,17 +447,17 @@ module powerbi.extensibility.visual {
                         }                        
                     }  
                     
-                    connectionMapMarker.isSelected = !connectionMapMarker.isSelected;
-                    me.setSelectionStyle(connectionMapMarker.isSelected, connectionMapMarker.marker);
+                    routeMapMarker.isSelected = !routeMapMarker.isSelected;
+                    me.setSelectionStyle(routeMapMarker.isSelected, routeMapMarker.marker);
                     
-                    connectionMapMarker.arcs.forEach((item) => {
-                        if (item.isSelected !== connectionMapMarker.isSelected) {
-                            item.isSelected = connectionMapMarker.isSelected;
+                    routeMapMarker.arcs.forEach((item) => {
+                        if (item.isSelected !== routeMapMarker.isSelected) {
+                            item.isSelected = routeMapMarker.isSelected;
                             me.setSelectionStyle(item.isSelected, item.arc);
                             
                             item.markers.forEach((marker) => {
-                                if (marker !== connectionMapMarker) {
-                                    marker.isSelected = connectionMapMarker.isSelected;
+                                if (marker !== routeMapMarker) {
+                                    marker.isSelected = routeMapMarker.isSelected;
                                     me.setSelectionStyle(marker.isSelected, marker.marker);
                                 }
                             });
@@ -473,25 +473,25 @@ module powerbi.extensibility.visual {
             element.on('click', function (e) {  
                 (e as L.MouseEvent).originalEvent.preventDefault();              
                 
-                let markers = me.connectionMapDataView.markers;
-                let arcs = me.connectionMapDataView.arcs;
+                let markers = me.routeMapDataView.markers;
+                let arcs = me.routeMapDataView.arcs;
                 
-                let connectionMapArc: ConnectionMapArc;
+                let routeMapArc: RouteMapArc;
                 
                 for(var item in arcs) {
                     if(arcs[item].arc === this) {
-                        connectionMapArc = arcs[item];
+                        routeMapArc = arcs[item];
                         break;
                     }
                 }                
                 
                 let isMultipleSelection = (e as L.MouseEvent).originalEvent.ctrlKey;
                 
-                if(!connectionMapArc || (connectionMapArc.isSelected && !isMultipleSelection)) {
+                if(!routeMapArc || (routeMapArc.isSelected && !isMultipleSelection)) {
                     return;
                 }
                 
-                let selectedId: ISelectionId = connectionMapArc.selectionId;              
+                let selectedId: ISelectionId = routeMapArc.selectionId;              
                            
                 me.selectionManager.select(selectedId, isMultipleSelection).then((ids: ISelectionId[]) => {
                     
@@ -509,10 +509,10 @@ module powerbi.extensibility.visual {
                         }
                     }       
                     
-                    connectionMapArc.isSelected = !connectionMapArc.isSelected;
-                    me.setSelectionStyle(connectionMapArc.isSelected, connectionMapArc.arc);
+                    routeMapArc.isSelected = !routeMapArc.isSelected;
+                    me.setSelectionStyle(routeMapArc.isSelected, routeMapArc.arc);
 
-                    connectionMapArc.markers.forEach((item: ConnectionMapMarker) => {  
+                    routeMapArc.markers.forEach((item: RouteMapMarker) => {  
                         let markerGotSelectedElements = false;
                         
                         for(var i in item.arcs) {
@@ -531,7 +531,7 @@ module powerbi.extensibility.visual {
             });
         }
 
-        private createCustomizableArc(fromLatLng: L.LatLng, toLatLng: L.LatLng, settings: ConnectionMapSettings): L.Polyline {
+        private createCustomizableArc(fromLatLng: L.LatLng, toLatLng: L.LatLng, settings: RouteMapSettings): L.Polyline {
 
             let l: any = L;
 
@@ -543,7 +543,7 @@ module powerbi.extensibility.visual {
             return arc;
         }
 
-        private createCustomizableMarker(latLng: L.LatLng, settings: ConnectionMapSettings): L.CircleMarker {
+        private createCustomizableMarker(latLng: L.LatLng, settings: RouteMapSettings): L.CircleMarker {
 
             let marker = L.circleMarker(latLng, {
                 color: "blue",
@@ -560,15 +560,15 @@ module powerbi.extensibility.visual {
         }
 
         public render(): void {
-            this.map.addLayer(this.connectionMapDataView.arcsLayer);
-            this.map.addLayer(this.connectionMapDataView.markersLayer);
-            this.map.addLayer(this.connectionMapDataView.labelsLayer);
+            this.map.addLayer(this.routeMapDataView.arcsLayer);
+            this.map.addLayer(this.routeMapDataView.markersLayer);
+            this.map.addLayer(this.routeMapDataView.labelsLayer);
             
             this.setLabelFontColor(this.settings.routes.getLabelFontColor());            
         }
 
         public clearMap(): void {
-            let dataView = this.connectionMapDataView;
+            let dataView = this.routeMapDataView;
             if (dataView && dataView.arcsLayer && dataView.markersLayer && dataView.labelsLayer) {
                 dataView.arcsLayer.clearLayers();
                 dataView.markersLayer.clearLayers();
@@ -629,9 +629,9 @@ module powerbi.extensibility.visual {
             return directions;
         }
         
-        private createConnectionMapArc(direction: Direction, 
-                                       settings: ConnectionMapSettings, 
-                                       selectionCategoryColumn: DataViewCategoricalColumn): ConnectionMapArc {
+        private createRouteMapArc(direction: Direction, 
+                                       settings: RouteMapSettings, 
+                                       selectionCategoryColumn: DataViewCategoricalColumn): RouteMapArc {
                                            
             let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom),
                 toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo);            
@@ -659,7 +659,7 @@ module powerbi.extensibility.visual {
             };
         }
         
-        private createConnectionMapMarker(direction: Direction, isDestinationPoint: boolean, latLng: L.LatLng, settings: ConnectionMapSettings): ConnectionMapMarker {                
+        private createRouteMapMarker(direction: Direction, isDestinationPoint: boolean, latLng: L.LatLng, settings: RouteMapSettings): RouteMapMarker {                
             
             let marker = this.createCustomizableMarker(latLng, settings);
 
@@ -681,7 +681,7 @@ module powerbi.extensibility.visual {
             };
         }
 
-        public converter(dataView: DataView): ConnectionMapDataView {
+        public converter(dataView: DataView): RouteMapDataView {
 
             this.isDataValid = false;
             let settings = this.settings = this.parseSettings(dataView);
@@ -714,8 +714,8 @@ module powerbi.extensibility.visual {
             
             let marketCategory = dataView.categorical.categories[0];
 
-            let processedArcs: ConnectionMapArcList = {},
-                processedMarkers: ConnectionMapMarkerList = {};
+            let processedArcs: RouteMapArcList = {},
+                processedMarkers: RouteMapMarkerList = {};
 
             let markersLayer: L.FeatureGroup = L.featureGroup(),
                 arcsLayer: L.FeatureGroup = L.featureGroup(),
@@ -727,38 +727,38 @@ module powerbi.extensibility.visual {
                     keyFrom = direction.airportCodeFrom,
                     keyTo = direction.airportCodeTo;                    
 
-                let connectionMapArc = this.createConnectionMapArc(direction, settings, marketCategory);    
+                let routeMapArc = this.createRouteMapArc(direction, settings, marketCategory);    
 
-                processedArcs[keyArc] = connectionMapArc;
-                arcsLayer.addLayer(connectionMapArc.arc);
+                processedArcs[keyArc] = routeMapArc;
+                arcsLayer.addLayer(routeMapArc.arc);
 
-                let connectionMapMarkerFrom: ConnectionMapMarker,
-                    connectionMapMarkerTo: ConnectionMapMarker;
+                let routeMapMarkerFrom: RouteMapMarker,
+                    routeMapMarkerTo: RouteMapMarker;
 
                 if (!processedMarkers[keyFrom]) {
                     let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom);
-                    connectionMapMarkerFrom = this.createConnectionMapMarker(direction, false, fromLatLng, settings);
+                    routeMapMarkerFrom = this.createRouteMapMarker(direction, false, fromLatLng, settings);
 
-                    processedMarkers[keyFrom] = connectionMapMarkerFrom;
-                    markersLayer.addLayer(connectionMapMarkerFrom.marker);
+                    processedMarkers[keyFrom] = routeMapMarkerFrom;
+                    markersLayer.addLayer(routeMapMarkerFrom.marker);
                 } else {
-                    connectionMapMarkerFrom = processedMarkers[keyFrom];
+                    routeMapMarkerFrom = processedMarkers[keyFrom];
                 }
 
                 if (!processedMarkers[keyTo]) {
                     let toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo); 
-                    connectionMapMarkerTo = this.createConnectionMapMarker(direction, true, toLatLng, settings);
+                    routeMapMarkerTo = this.createRouteMapMarker(direction, true, toLatLng, settings);
 
-                    processedMarkers[keyTo] = connectionMapMarkerTo;
-                    markersLayer.addLayer(connectionMapMarkerTo.marker);
+                    processedMarkers[keyTo] = routeMapMarkerTo;
+                    markersLayer.addLayer(routeMapMarkerTo.marker);
                 } else {
-                    connectionMapMarkerTo = processedMarkers[keyTo];
+                    routeMapMarkerTo = processedMarkers[keyTo];
                 }
 
-                processedMarkers[keyFrom].arcs.push(connectionMapArc);
-                processedMarkers[keyTo].arcs.push(connectionMapArc);
-                processedArcs[keyArc].markers.push(connectionMapMarkerFrom);
-                processedArcs[keyArc].markers.push(connectionMapMarkerTo);
+                processedMarkers[keyFrom].arcs.push(routeMapArc);
+                processedMarkers[keyTo].arcs.push(routeMapArc);
+                processedArcs[keyArc].markers.push(routeMapMarkerFrom);
+                processedArcs[keyArc].markers.push(routeMapMarkerTo);
             }
 
             if (this.settings.routes.showOutOfMapMarkerLabels) {
@@ -783,8 +783,8 @@ module powerbi.extensibility.visual {
                 return;
             }
 
-            let markers = this.connectionMapDataView.markers;
-            let labelsLayer = this.connectionMapDataView.labelsLayer;
+            let markers = this.routeMapDataView.markers;
+            let labelsLayer = this.routeMapDataView.labelsLayer;
 
             labelsLayer.clearLayers();
 
