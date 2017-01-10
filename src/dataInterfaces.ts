@@ -29,8 +29,7 @@ module powerbi.extensibility.visual {
         markers: RouteMapMarkerList,
         arcs: RouteMapArcList,
         arcsLayer: L.FeatureGroup,
-        markersLayer: L.FeatureGroup,
-        labelsLayer: L.FeatureGroup
+        markersLayer: L.FeatureGroup
     }
     
     export interface RouteMapMarkerList {

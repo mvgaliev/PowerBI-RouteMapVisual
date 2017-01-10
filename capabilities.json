@@ -151,10 +151,20 @@
                         }
                     }
                 },
-                "showOutOfMapMarkerLabels": {
-                    "displayName": "Show out map border labels",
+                "markerColor": {
+                    "displayName": "Marker color",
                     "type": {
-                        "bool": true
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }  
+                },
+                "markerRadius": {
+                    "displayName": "Marker radius",
+                    "type": {
+                        "numeric": true
                     }
                 }
             }

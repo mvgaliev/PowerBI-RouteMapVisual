@@ -42,7 +42,8 @@ module powerbi.extensibility.visual {
     export class RouteMapRoutesSettings {
         public arcColor: CustomColor = new CustomColor("red");
         public labelFontColor: CustomColor = new CustomColor("black");
-        public showOutOfMapMarkerLabels: boolean = true;
+        public markerColor: CustomColor = new CustomColor("blue");
+        public markerRadius: number = 6;
         
         public getArcColor() {
             return this.arcColor.solid.color;
@@ -50,6 +51,10 @@ module powerbi.extensibility.visual {
         
         public getLabelFontColor() {
             return this.labelFontColor.solid.color;
+        }
+        
+        public getMarkerColor() {
+            return this.markerColor.solid.color;
         }
     }
 

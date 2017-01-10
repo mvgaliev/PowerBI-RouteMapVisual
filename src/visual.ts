@@ -71,7 +71,8 @@ module powerbi.extensibility.visual {
                         properties: {
                             arcColor: this.settings.routes.getArcColor(),
                             labelFontColor: this.settings.routes.getLabelFontColor(),
-                            showOutOfMapMarkerLabels: this.settings.routes.showOutOfMapMarkerLabels                           
+                            markerColor: this.settings.routes.getMarkerColor(),
+                            markerRadius: this.settings.routes.markerRadius                           
                         },
                         selector: null
                     });
@@ -108,8 +109,7 @@ module powerbi.extensibility.visual {
                 markers: {},
                 arcs: {},
                 arcsLayer: L.featureGroup(),
-                markersLayer: L.featureGroup(),
-                labelsLayer: L.featureGroup()
+                markersLayer: L.featureGroup()
             };
 
             this.setMapHandlers();
@@ -134,83 +134,8 @@ module powerbi.extensibility.visual {
         private parseSettings(dataView: DataView): RouteMapSettings {
             return RouteMapSettings.parse<RouteMapSettings>(dataView);
         }
-
-        // returns:
-        // 0 - marker isn't on the line
-        // 1 - marker is in the end of the line
-        // -1 - marker is at the beginning of the line
-        private isMarkerOnTheLine(coords: L.LatLng[], markerPoint: L.LatLng): number {
-            if (!coords || coords.length === 0)
-                return 0;
-
-            if (coords[0].lat.toFixed(5) === markerPoint.lat.toFixed(5) &&
-                (coords[0].lng.toFixed(5) === markerPoint.lng.toFixed(5) || ((Math.abs(+coords[0].lng.toFixed(5)) + Math.abs(+markerPoint.lng.toFixed(5)) - 360) < 2)))
-                return -1;
-            else if (coords[coords.length - 1].lat.toFixed(5) === markerPoint.lat.toFixed(5) &&
-                (coords[coords.length - 1].lng.toFixed(5) === markerPoint.lng.toFixed(5) || ((Math.abs(+coords[coords.length - 1].lat.toFixed(5)) + Math.abs(+markerPoint.lat.toFixed(5)) - 360) < 2)))
-                return 1;
-            else return 0;
-        };
-
-        private isCoordVisible(latLng: L.LatLng): boolean {
-            let bounds = this.map.getBounds();
-
-            return latLng && latLng.lat < bounds.getNorth() &&
-                latLng.lat > bounds.getSouth() &&
-                latLng.lng > bounds.getWest() &&
-                latLng.lng < bounds.getEast();
-        }
-
-        private shiftPointToShowLabelCorrectly(nearestVisiblePoint: L.LatLng): L.LatLng {
-            let pixelMaxOffset = 20,
-                mapBorders = this.map.getPixelBounds(),
-                point = this.map.project(nearestVisiblePoint);
-
-            let offsetX = 0,
-                offsetY = 0;
-
-            if (Math.abs(point.y - mapBorders.min.y) < pixelMaxOffset) {
-                // point is on the top edge
-                offsetY = 10;
-            }
-
-            if (Math.abs(point.x - mapBorders.max.x) < pixelMaxOffset) {
-                // point is on the right edge
-                offsetX = -50;
-            }
-
-            if (Math.abs(point.x - mapBorders.min.x) < pixelMaxOffset) {
-                // point is on the left edge
-                offsetX = 10;
-            }
-            if (Math.abs(point.y - mapBorders.max.y) < pixelMaxOffset) {
-                // point is on the bottom edge
-                offsetY = -20;
-            }
-
-            point.x = point.x + offsetX;
-            point.y = point.y + offsetY;
-            return this.map.unproject(point);
-        }
         
         private midpointTo(pointFrom: L.LatLng, pointTo: L.LatLng): L.LatLng {
-            
-            //geodesic middle point
-            /*var a1 = pointFrom.lat * Math.PI / 180, b1 = pointFrom.lng * Math.PI / 180;
-            var a2 = pointTo.lat * Math.PI / 180, b2 = pointTo.lng * Math.PI / 180;
-
-            if (Math.abs(b2-b1) > Math.PI) b1 += 2*Math.PI; // crossing anti-meridian
-
-            var a3 = (a1+a2)/2;
-            var f1 = Math.tan(Math.PI/4 + a1/2);
-            var f2 = Math.tan(Math.PI/4 + a2/2);
-            var f3 = Math.tan(Math.PI/4 + a3/2);
-            var b3 = ((b2-b1)*Math.log(f3) + b1*Math.log(f2) - b2*Math.log(f1) ) / Math.log(f2/f1);
-
-            if (!isFinite(b3)) b3 = (b1+b2)/2; // parallel of latitude
-
-            var p = L.latLng((a3 * 180 / Math.PI), (b3 * 180 / Math.PI + 540) % 360 - 180); // normalise to −180..+180°*/
-
             return L.latLng((pointFrom.lat + pointTo.lat) / 2, (pointFrom.lng + pointTo.lng) / 2);
         };
         
@@ -271,66 +196,6 @@ module powerbi.extensibility.visual {
 						   [pointTo.lat, pointTo.lng]], {color: settings.routes.getArcColor()} );
             
             return curve;
-        }
-
-        private createMarkerDirectionLabels(marker: L.CircleMarker, arcs: RouteMapArc[], title: string): L.Marker[] {
-            let markerPoint = marker.getLatLng(),
-                isMarkerInvisible = !this.isCoordVisible(markerPoint),
-                nearestVisiblePoints: L.LatLng[] = [],
-                labelLayer: L.FeatureGroup = L.featureGroup();
-
-            if (isMarkerInvisible) {
-
-                for (var item in arcs) {
-                    let routeMapArc = arcs[item],
-                        coords = routeMapArc.arc.getLatLngs();
-
-                    let isMarkerOnThePolyline = this.isMarkerOnTheLine(coords, markerPoint);
-                    if (isMarkerOnThePolyline === 0)
-                        continue;
-
-                    if (isMarkerOnThePolyline === -1) {
-                        for (var index in coords) {
-                            if (this.isCoordVisible(coords[index])) {
-                                nearestVisiblePoints.push(coords[index]);
-                                break;
-                            }
-                        }
-                    } else if (isMarkerOnThePolyline === 1) {
-                        for (var j = coords.length - 1; j >= 0; j--) {
-                            if (this.isCoordVisible(coords[j])) {
-                                nearestVisiblePoints.push(coords[j]);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            let labels: L.Marker[] = [];
-            for (var i = 0; i < nearestVisiblePoints.length; i++) {
-                let nearestVisiblePoint = this.shiftPointToShowLabelCorrectly(nearestVisiblePoints[i]);
-                let label = L.divIcon({ className: 'route-map-direction-label', html: title });
-                labels.push(L.marker(nearestVisiblePoint, { icon: label }));
-            }
-
-            return labels;
-        }
-
-        private createMarkersDirectionLabels(markerList: RouteMapMarkerList): L.Marker[] {
-            let outOfBorderLabels: L.Marker[] = [];
-
-            for (var item in markerList) {
-                let markerWithArcs = markerList[item];
-
-                let newLabels = this.createMarkerDirectionLabels(markerWithArcs.marker, markerWithArcs.arcs, markerWithArcs.airportCode);
-
-                newLabels.forEach((item) => {
-                    outOfBorderLabels.push(item);
-                });
-            }
-
-            return outOfBorderLabels;
         }
 
         private addMarkersToLayer(markers: L.Marker[], layer: L.FeatureGroup): void {
@@ -531,25 +396,13 @@ module powerbi.extensibility.visual {
             });
         }
 
-        private createCustomizableArc(fromLatLng: L.LatLng, toLatLng: L.LatLng, settings: RouteMapSettings): L.Polyline {
-
-            let l: any = L;
-
-            let arc = l.Polyline.Arc(fromLatLng, toLatLng, {
-                color: settings.routes.getArcColor(),
-                vertices: 250
-            });
-
-            return arc;
-        }
-
         private createCustomizableMarker(latLng: L.LatLng, settings: RouteMapSettings): L.CircleMarker {
 
             let marker = L.circleMarker(latLng, {
-                color: "blue",
-                fillColor: "blue",
+                color: settings.routes.getMarkerColor(),
+                fillColor:  settings.routes.getMarkerColor(),
                 fillOpacity: 1,
-                radius: 5
+                radius: settings.routes.markerRadius
             });
 
             return marker;
@@ -562,17 +415,15 @@ module powerbi.extensibility.visual {
         public render(): void {
             this.map.addLayer(this.routeMapDataView.arcsLayer);
             this.map.addLayer(this.routeMapDataView.markersLayer);
-            this.map.addLayer(this.routeMapDataView.labelsLayer);
             
             this.setLabelFontColor(this.settings.routes.getLabelFontColor());            
         }
 
         public clearMap(): void {
             let dataView = this.routeMapDataView;
-            if (dataView && dataView.arcsLayer && dataView.markersLayer && dataView.labelsLayer) {
+            if (dataView && dataView.arcsLayer && dataView.markersLayer) {
                 dataView.arcsLayer.clearLayers();
                 dataView.markersLayer.clearLayers();
-                dataView.labelsLayer.clearLayers();
             }
         }
         
@@ -705,8 +556,7 @@ module powerbi.extensibility.visual {
                     arcs: {},
                     arcsLayer: L.featureGroup(),
                     markers: {},
-                    markersLayer: L.featureGroup(),
-                    labelsLayer: L.featureGroup()
+                    markersLayer: L.featureGroup()
                 };
             }                  
 
@@ -718,8 +568,7 @@ module powerbi.extensibility.visual {
                 processedMarkers: RouteMapMarkerList = {};
 
             let markersLayer: L.FeatureGroup = L.featureGroup(),
-                arcsLayer: L.FeatureGroup = L.featureGroup(),
-                labelsLayer: L.FeatureGroup = L.featureGroup();
+                arcsLayer: L.FeatureGroup = L.featureGroup();
 
             for (var item in directions) {
                 let direction = directions[item];
@@ -761,20 +610,13 @@ module powerbi.extensibility.visual {
                 processedArcs[keyArc].markers.push(routeMapMarkerTo);
             }
 
-            if (this.settings.routes.showOutOfMapMarkerLabels) {
-                //not working with curves
-              /*  let outOfBorderLabels: L.Marker[] = this.createMarkersDirectionLabels(processedMarkers);
-                this.addMarkersToLayer(outOfBorderLabels, labelsLayer);*/
-            }
-
             this.isDataValid = true;                  
 
             return {
                 arcs: processedArcs,
                 markers: processedMarkers,
                 markersLayer: markersLayer,
-                arcsLayer: arcsLayer,
-                labelsLayer: labelsLayer
+                arcsLayer: arcsLayer
             };
         }
 
@@ -784,16 +626,6 @@ module powerbi.extensibility.visual {
             }
 
             let markers = this.routeMapDataView.markers;
-            let labelsLayer = this.routeMapDataView.labelsLayer;
-
-            labelsLayer.clearLayers();
-
-            let showLayers = this.settings.routes.showOutOfMapMarkerLabels;
-            if (showLayers) {
-                //not working with curves
-               /* let outOfBorderLabels: L.Marker[] = this.createMarkersDirectionLabels(markers);
-                this.addMarkersToLayer(outOfBorderLabels, labelsLayer);*/
-            }
         }
 
         private setMapHandlers(): void {
