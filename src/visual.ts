@@ -69,10 +69,20 @@ module powerbi.extensibility.visual {
                         objectName: objectName,
                         displayName: "Routes",
                         properties: {
-                            arcColor: this.settings.routes.getArcColor(),
-                            labelFontColor: this.settings.routes.getLabelFontColor(),
-                            markerColor: this.settings.routes.getMarkerColor(),
-                            markerRadius: this.settings.routes.markerRadius                           
+                            arcColor: this.settings.routes.getArcColor()                       
+                        },
+                        selector: null
+                    });
+                    break;
+                case 'markers': 
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        displayName: "Markers",
+                        properties: {
+                            markerColor: this.settings.markers.getMarkerColor(),
+                            labelFontColor: this.settings.markers.getLabelFontColor(),
+                            
+                            radius: this.settings.markers.radius                           
                         },
                         selector: null
                     });
@@ -399,10 +409,10 @@ module powerbi.extensibility.visual {
         private createCustomizableMarker(latLng: L.LatLng, settings: RouteMapSettings): L.CircleMarker {
 
             let marker = L.circleMarker(latLng, {
-                color: settings.routes.getMarkerColor(),
-                fillColor:  settings.routes.getMarkerColor(),
+                color: settings.markers.getMarkerColor(),
+                fillColor:  settings.markers.getMarkerColor(),
                 fillOpacity: 1,
-                radius: settings.routes.markerRadius
+                radius: settings.markers.radius
             });
 
             return marker;
@@ -416,7 +426,7 @@ module powerbi.extensibility.visual {
             this.map.addLayer(this.routeMapDataView.arcsLayer);
             this.map.addLayer(this.routeMapDataView.markersLayer);
             
-            this.setLabelFontColor(this.settings.routes.getLabelFontColor());            
+            this.setLabelFontColor(this.settings.markers.getLabelFontColor());            
         }
 
         public clearMap(): void {
@@ -467,8 +477,8 @@ module powerbi.extensibility.visual {
                 directions.push({
                     market: markets[index],
                     index: index,
-                    airportCodeFrom: codesFrom[index],
-                    airportCodeTo: codesTo[index],
+                    locationFrom: codesFrom[index],
+                    locationTo: codesTo[index],
                     latitudeFrom: latsFrom[index],
                     longitudeFrom: longsFrom[index],
                     latitudeTo: latsTo[index],
@@ -487,8 +497,8 @@ module powerbi.extensibility.visual {
             let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom),
                 toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo);            
 
-            let airportCodeFrom = direction.airportCodeFrom,
-                airportCodeTo = direction.airportCodeTo;
+            let locationFrom = direction.locationFrom,
+                locationTo = direction.locationTo;
             
             
             //let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
@@ -514,7 +524,7 @@ module powerbi.extensibility.visual {
             
             let marker = this.createCustomizableMarker(latLng, settings);
 
-            let label = isDestinationPoint ? direction.airportCodeTo : direction.airportCodeFrom;
+            let label = isDestinationPoint ? direction.locationTo : direction.locationFrom;
             this.setLabelToElement(label, marker);
 
             let lat = isDestinationPoint ? direction.latitudeTo : direction.latitudeFrom;
@@ -527,7 +537,7 @@ module powerbi.extensibility.visual {
             return {
                 marker: marker,
                 arcs: [], 
-                airportCode: direction.airportCodeFrom,
+                location: direction.locationFrom,
                 isSelected: false
             };
         }
@@ -573,8 +583,8 @@ module powerbi.extensibility.visual {
             for (var item in directions) {
                 let direction = directions[item];
                 let keyArc = direction.market,
-                    keyFrom = direction.airportCodeFrom,
-                    keyTo = direction.airportCodeTo;                    
+                    keyFrom = direction.locationFrom,
+                    keyTo = direction.locationTo;                    
 
                 let routeMapArc = this.createRouteMapArc(direction, settings, marketCategory);    
 

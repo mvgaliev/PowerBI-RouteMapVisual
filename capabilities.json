@@ -6,7 +6,7 @@
             "kind": "Grouping"
         },	
 		{
-            "displayName": "Aiport Code From",
+            "displayName": "Location From",
             "name": "codeFrom",
             "kind": "Grouping"
         },
@@ -21,7 +21,7 @@
             "kind": "Measure"
         },
 		{
-            "displayName": "Aiport Code To",
+            "displayName": "Location To",
             "name": "codeTo",
             "kind": "Grouping"
         },	
@@ -140,17 +140,12 @@
                             }
                         }
                     }
-                },
-                "labelFontColor": {
-                    "displayName": "Label font color",
-                    "type": {
-                        "fill": {
-                            "solid": {
-                                "color": true
-                            }
-                        }
-                    }
-                },
+                }                
+            }
+        },
+        "markers": {
+            "displayName": "Markers",
+            "properties": {
                 "markerColor": {
                     "displayName": "Marker color",
                     "type": {
@@ -161,13 +156,23 @@
                         }
                     }  
                 },
-                "markerRadius": {
-                    "displayName": "Marker radius",
+                "radius": {
+                    "displayName": "Radius",
                     "type": {
                         "numeric": true
                     }
+                },
+                "labelFontColor": {
+                    "displayName": "Label color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
                 }
-            }
+            }            
         }        
     }
 }

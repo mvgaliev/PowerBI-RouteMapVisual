@@ -42,7 +42,7 @@ module powerbi.extensibility.visual {
     
     export interface RouteMapMarker {
         marker: L.CircleMarker, 
-        airportCode: string,
+        location: string,
         arcs: RouteMapArc[],
         isSelected: boolean
     }
@@ -54,8 +54,8 @@ module powerbi.extensibility.visual {
         selectionId: ISelectionId
     }
     
-    export interface RouteMapAirport {
-        code: string,
+    export interface RouteMapPoint {
+        name: string,
         latitude: number,
         longitude: number
     }
@@ -63,8 +63,8 @@ module powerbi.extensibility.visual {
     export interface Direction {
         market: string,
         index: number,
-        airportCodeFrom: string,
-        airportCodeTo: string,
+        locationFrom: string,
+        locationTo: string,
         latitudeFrom: number,
         longitudeFrom: number,
         latitudeTo: number,

@@ -26,10 +26,6 @@
 
 module powerbi.extensibility.visual {
     import DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
-
-    export class RouteMapMarkerSettings {
-        public fill: string = "red";
-    }
     
     export class CustomColor {
         public solid: { color: string }
@@ -40,14 +36,17 @@ module powerbi.extensibility.visual {
     }
 
     export class RouteMapRoutesSettings {
-        public arcColor: CustomColor = new CustomColor("red");
-        public labelFontColor: CustomColor = new CustomColor("black");
-        public markerColor: CustomColor = new CustomColor("blue");
-        public markerRadius: number = 6;
+        public arcColor: CustomColor = new CustomColor("red");       
         
         public getArcColor() {
             return this.arcColor.solid.color;
-        }
+        }               
+    }
+    
+    export class RouteMapMarkersSettings {
+        public labelFontColor: CustomColor = new CustomColor("black");
+        public markerColor: CustomColor = new CustomColor("blue");
+        public radius: number = 6;
         
         public getLabelFontColor() {
             return this.labelFontColor.solid.color;
@@ -60,5 +59,6 @@ module powerbi.extensibility.visual {
 
     export class RouteMapSettings extends DataViewObjectsParser {
         public routes: RouteMapRoutesSettings = new RouteMapRoutesSettings();
+        public markers: RouteMapMarkersSettings = new RouteMapMarkersSettings();
     }
 }
