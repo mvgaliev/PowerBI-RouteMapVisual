@@ -40,6 +40,7 @@ module powerbi.extensibility.visual {
         private isDataValid: boolean = false;
         private selectionManager: ISelectionManager;
         private host: IVisualHost;
+        private isFirstMultipleSelection: boolean = true;
 
         private settings: RouteMapSettings;
 
@@ -274,6 +275,8 @@ module powerbi.extensibility.visual {
                 markers[item].isSelected = false;
                 this.setSelectionStyle(true, markers[item].marker);
             }
+            
+            this.isFirstMultipleSelection = true;
         }
 
         private setOnMarkerClickEvent(element: L.CircleMarker): void {
@@ -308,7 +311,7 @@ module powerbi.extensibility.visual {
                 
                 me.selectionManager.select(arcSelectionIds, isMultipleSelection).then((ids: ISelectionId[]) => {                    
                     
-                    if (!isMultipleSelection) {
+                    if (me.isFirstMultipleSelection || !isMultipleSelection) {
                         for (var item in arcs) {
                             arcs[item].isSelected = false;
                             me.setSelectionStyle(false, arcs[item].arc);
@@ -319,7 +322,9 @@ module powerbi.extensibility.visual {
                                 markers[item].isSelected = false;
                                 me.setSelectionStyle(false, markers[item].marker);
                             }
-                        }                        
+                        }     
+                        
+                        me.isFirstMultipleSelection = false;                   
                     }  
                     
                     routeMapMarker.isSelected = !routeMapMarker.isSelected;
@@ -370,7 +375,7 @@ module powerbi.extensibility.visual {
                            
                 me.selectionManager.select(selectedId, isMultipleSelection).then((ids: ISelectionId[]) => {
                     
-                    if(!isMultipleSelection) {
+                    if(me.isFirstMultipleSelection || !isMultipleSelection) {
                         for (var item in markers) {
                             markers[item].isSelected = false;
                             me.setSelectionStyle(false, markers[item].marker);
@@ -381,7 +386,9 @@ module powerbi.extensibility.visual {
                                 arcs[item].isSelected = false;
                                 me.setSelectionStyle(false, arcs[item].arc);
                             }
-                        }
+                        }                        
+                        
+                        me.isFirstMultipleSelection = false;  
                     }       
                     
                     routeMapArc.isSelected = !routeMapArc.isSelected;
@@ -401,7 +408,7 @@ module powerbi.extensibility.visual {
                             item.isSelected = !item.isSelected;                          
                             me.setSelectionStyle(item.isSelected, item.marker);
                         }                       
-                    });       
+                    });  
                 });
             });
         }
@@ -425,6 +432,7 @@ module powerbi.extensibility.visual {
         public render(): void {
             this.map.addLayer(this.routeMapDataView.arcsLayer);
             this.map.addLayer(this.routeMapDataView.markersLayer);
+            this.map.fitBounds(this.routeMapDataView.arcsLayer.getBounds());
             
             this.setLabelFontColor(this.settings.markers.getLabelFontColor());            
         }
