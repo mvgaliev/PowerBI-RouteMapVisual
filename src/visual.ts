@@ -584,7 +584,13 @@ module powerbi.extensibility.visual {
                 let direction = directions[item];
                 let keyArc = direction.market,
                     keyFrom = direction.locationFrom,
-                    keyTo = direction.locationTo;                    
+                    keyTo = direction.locationTo;
+                    
+                if(!keyArc || !keyFrom || !keyTo 
+                || !direction.latitudeFrom || !direction.latitudeTo 
+                || !direction.longitudeFrom || !direction.longitudeTo) {
+                    continue;
+                }                    
 
                 let routeMapArc = this.createRouteMapArc(direction, settings, marketCategory);    
 
