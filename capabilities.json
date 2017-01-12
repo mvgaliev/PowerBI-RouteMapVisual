@@ -41,6 +41,11 @@
             "kind": "Measure"
         },
         {
+            "displayName": "Thickness",
+            "name": "thickness",
+            "kind": "Measure"
+        },
+        {
             "displayName": "Tooltips",
             "name": "tooltips",
             "kind": "Measure"
@@ -72,6 +77,9 @@
                         "max": 1
                     },
                     "stateValue": {
+                        "max": 1 
+                    },
+                    "thickness": {
                         "max": 1 
                     },
                     "tooltips": { 
@@ -133,6 +141,7 @@
                             { "bind": { "to": "latTo" } },
                             { "bind": { "to": "longTo" } },
                             { "bind": { "to": "stateValue" } },
+                            { "bind": { "to": "thickness" } },
                             { "for": { "in": "tooltips" } }
                         ]
                     }
@@ -145,13 +154,31 @@
             "displayName": "Routes",
             "properties": {
                 "arcColor": {
-                    "displayName": "Arc color",
+                    "displayName": "Default arc color",
                     "type": {
                         "fill": {
                             "solid": {
                                 "color": true
                             }
                         }
+                    }
+                },
+                "defaultThickness": {
+                    "displayName": "Default thickness",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "minThickness": {
+                    "displayName": "Min thickness",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "maxThickness": {
+                    "displayName": "Min thickness",
+                    "type": {
+                        "numeric": true
                     }
                 }                
             }

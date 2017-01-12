@@ -36,7 +36,10 @@ module powerbi.extensibility.visual {
     }
 
     export class RouteMapRoutesSettings {
-        public arcColor: CustomColor = new CustomColor("red");       
+        public arcColor: CustomColor = new CustomColor("red"); 
+        public defaultThickness: number = 3;
+        public minThickness: number = 1;      
+        public maxThickness: number = 5;
         
         public getArcColor() {
             return this.arcColor.solid.color;

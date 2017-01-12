@@ -60,6 +60,11 @@ module powerbi.extensibility.visual {
         longitude: number
     }
     
+    export interface ThicknessOptions {
+        minValue: number,
+        coeficient: number
+    } 
+    
     export interface Direction {
         market: string,
         index: number,
@@ -70,6 +75,7 @@ module powerbi.extensibility.visual {
         latitudeTo: number,
         longitudeTo: number,
         stateValue: number,
+        thickness: number,
         tooltip: string      
     }
 }

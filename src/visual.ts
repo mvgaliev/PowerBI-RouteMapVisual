@@ -41,6 +41,7 @@ module powerbi.extensibility.visual {
         private selectionManager: ISelectionManager;
         private host: IVisualHost;
         private isFirstMultipleSelection: boolean = true;
+        private thicknessOptions: ThicknessOptions;
 
         private settings: RouteMapSettings;
 
@@ -70,7 +71,10 @@ module powerbi.extensibility.visual {
                         objectName: objectName,
                         displayName: "Routes",
                         properties: {
-                            arcColor: this.settings.routes.getArcColor()                       
+                            arcColor: this.settings.routes.getArcColor(),
+                            defaultThickness: this.settings.routes.defaultThickness,
+                            minThickness: this.settings.routes.minThickness,     
+                            maxThickness: this.settings.routes.maxThickness               
                         },
                         selector: null
                     });
@@ -231,23 +235,27 @@ module powerbi.extensibility.visual {
             return L.latLng(lat * 180/Math.PI, long);  
         }
         
-        private createCurvedLine(pointFrom: L.LatLng, pointTo: L.LatLng, market: string, settings: RouteMapSettings, routeValue?: number, distanceCoef?: number): L.Polyline {
+        private createCurvedLine(direction: Direction, settings: RouteMapSettings): L.Polyline {
             let l: any = L;
+            
+            let pointFrom = L.latLng(direction.latitudeFrom, direction.longitudeFrom),
+                pointTo = L.latLng(direction.latitudeTo, direction.longitudeTo); 
             
             let midpoint = this.midpointTo(pointFrom, pointTo);                    
             
             let specialPoint = this.getSpecialPointLatLng(pointFrom, pointTo, midpoint);                            
             
+            let stateValue = direction.stateValue;
             let color;
             
-            if(routeValue !== undefined) {
-                if (routeValue <= settings.state1.dataMax && routeValue >= settings.state1.dataMin) {
+            if(stateValue !== undefined) {
+                if (stateValue <= settings.state1.dataMax && stateValue >= settings.state1.dataMin) {
                     color = settings.state1.getStateColor();
 
-                } else if (routeValue <=  settings.state2.dataMax && routeValue >= settings.state2.dataMin) {
+                } else if (stateValue <=  settings.state2.dataMax && stateValue >= settings.state2.dataMin) {
                     color = settings.state2.getStateColor();
 
-                } else if (routeValue <= settings.state3.dataMax && routeValue >= settings.state3.dataMin) {
+                } else if (stateValue <= settings.state3.dataMax && stateValue >= settings.state3.dataMin) {
                     color = settings.state3.getStateColor();
                 } else {
                     color = settings.routes.getArcColor();
@@ -256,9 +264,13 @@ module powerbi.extensibility.visual {
                 color = settings.routes.getArcColor();
             }
             
-            let curve = l.curve(['M',[pointFrom.lat,pointFrom.lng],
+            let thickness = this.thicknessOptions 
+                        ? settings.routes.minThickness + (direction.thickness - this.thicknessOptions.minValue) * this.thicknessOptions.coeficient 
+                        : settings.routes.defaultThickness;
+            
+            let curve = l.curve(['M',[pointFrom.lat, pointFrom.lng],
 					   'Q',[specialPoint.lat, specialPoint.lng],
-						   [pointTo.lat, pointTo.lng]], {color: color} );
+						   [pointTo.lat, pointTo.lng]], {color: color, weight: thickness} );
             
             return curve;
         }
@@ -511,7 +523,8 @@ module powerbi.extensibility.visual {
                 latsTo: any[] = dataView.categorical.values[2].values,
                 longsFrom: any[] = dataView.categorical.values[1].values,
                 longsTo: any[] = dataView.categorical.values[3].values,
-                stateValues: any[] = dataView.categorical.values[4] ? dataView.categorical.values[4].values : null;           
+                stateValues: any[],
+                thicknesses: any[];           
                 
             let tooltipColumns: DataViewValueColumn[] = [];
             
@@ -519,6 +532,14 @@ module powerbi.extensibility.visual {
                 let column = dataView.categorical.values[i];
                 if(column.source && column.source.roles["tooltips"]) {
                     tooltipColumns.push(column);
+                } 
+                
+                if(column.source && column.source.roles["stateValue"]) {
+                    stateValues = column.values;
+                } 
+                
+                if(column.source && column.source.roles["thickness"]) {
+                    thicknesses = column.values;
                 }
             }    
             
@@ -547,11 +568,42 @@ module powerbi.extensibility.visual {
                     latitudeTo: latsTo[index],
                     longitudeTo: longsTo[index],
                     stateValue: stateValues ? stateValues[index] : null,
+                    thickness: thicknesses ? thicknesses[index] : null,
                     tooltip: tooltips[index]
                 });
-            });
+            });                      
             
             return directions;
+        }
+        
+        private initThicknessCoefficient(directions: Direction[]) {
+            if(!this.settings.routes.minThickness || !this.settings.routes.maxThickness) {
+                return;
+            }
+            
+            let minValue = Number.MAX_VALUE,
+                maxValue = -Number.MAX_VALUE;
+                
+            directions.forEach((direction) => {
+                if(direction.thickness && direction.thickness > maxValue) {
+                    maxValue = direction.thickness;
+                }
+                
+                if(direction.thickness && direction.thickness < minValue) {
+                    minValue = direction.thickness;
+                }
+            });
+            
+            if(minValue == Number.MAX_VALUE || minValue === maxValue) {
+                return;
+            }
+            
+            let coef = (this.settings.routes.maxThickness - this.settings.routes.minThickness) / (maxValue - minValue);
+            
+            this.thicknessOptions = {
+                coeficient: coef,
+                minValue: minValue 
+            };
         }
         
         private createRouteMapArc(direction: Direction, 
@@ -566,7 +618,7 @@ module powerbi.extensibility.visual {
             
             
             //let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
-            let arc = this.createCurvedLine(fromLatLng, toLatLng, direction.market, settings, direction.stateValue);          
+            let arc = this.createCurvedLine(direction, settings);          
 
             this.setPopupToElement(direction.tooltip, arc);
             
@@ -635,6 +687,8 @@ module powerbi.extensibility.visual {
             }                  
 
             let directions = this.parseDataViewToDirections(dataView);
+            
+            this.initThicknessCoefficient(directions);
             
             let marketCategory = dataView.categorical.categories[0];
 
