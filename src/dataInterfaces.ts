@@ -69,6 +69,7 @@ module powerbi.extensibility.visual {
         longitudeFrom: number,
         latitudeTo: number,
         longitudeTo: number,
+        stateValue: number,
         tooltip: string      
     }
 }

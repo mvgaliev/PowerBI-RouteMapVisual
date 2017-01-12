@@ -88,6 +88,42 @@ module powerbi.extensibility.visual {
                         selector: null
                     });
                     break;
+                case 'state1': 
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        displayName: "State 1",
+                        properties: {
+                            stateColor: this.settings.state1.getStateColor(),
+                            dataMin: this.settings.state1.dataMin,
+                            dataMax: this.settings.state1.dataMax
+                        },
+                        selector: null
+                    });
+                    break;
+                case 'state2': 
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        displayName: "State 2",
+                        properties: {
+                            stateColor: this.settings.state2.getStateColor(),
+                            dataMin: this.settings.state2.dataMin,
+                            dataMax: this.settings.state2.dataMax
+                        },
+                        selector: null
+                    });
+                    break;
+                case 'state3': 
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        displayName: "State 3",
+                        properties: {
+                            stateColor: this.settings.state3.getStateColor(),
+                            dataMin: this.settings.state3.dataMin,
+                            dataMax: this.settings.state3.dataMax
+                        },
+                        selector: null
+                    });
+                    break;
             };
 
             return objectEnumeration;
@@ -195,16 +231,34 @@ module powerbi.extensibility.visual {
             return L.latLng(lat * 180/Math.PI, long);  
         }
         
-        private createCurvedLine(pointFrom: L.LatLng, pointTo: L.LatLng, market: string, settings: RouteMapSettings, distanceCoef?: number): L.Polyline {
+        private createCurvedLine(pointFrom: L.LatLng, pointTo: L.LatLng, market: string, settings: RouteMapSettings, routeValue?: number, distanceCoef?: number): L.Polyline {
             let l: any = L;
             
             let midpoint = this.midpointTo(pointFrom, pointTo);                    
             
             let specialPoint = this.getSpecialPointLatLng(pointFrom, pointTo, midpoint);                            
+            
+            let color;
+            
+            if(routeValue !== undefined) {
+                if (routeValue <= settings.state1.dataMax && routeValue >= settings.state1.dataMin) {
+                    color = settings.state1.getStateColor();
 
+                } else if (routeValue <=  settings.state2.dataMax && routeValue >= settings.state2.dataMin) {
+                    color = settings.state2.getStateColor();
+
+                } else if (routeValue <= settings.state3.dataMax && routeValue >= settings.state3.dataMin) {
+                    color = settings.state3.getStateColor();
+                } else {
+                    color = settings.routes.getArcColor();
+                }
+            } else {
+                color = settings.routes.getArcColor();
+            }
+            
             let curve = l.curve(['M',[pointFrom.lat,pointFrom.lng],
 					   'Q',[specialPoint.lat, specialPoint.lng],
-						   [pointTo.lat, pointTo.lng]], {color: settings.routes.getArcColor()} );
+						   [pointTo.lat, pointTo.lng]], {color: color} );
             
             return curve;
         }
@@ -456,7 +510,8 @@ module powerbi.extensibility.visual {
             let latsFrom: any[] = dataView.categorical.values[0].values,
                 latsTo: any[] = dataView.categorical.values[2].values,
                 longsFrom: any[] = dataView.categorical.values[1].values,
-                longsTo: any[] = dataView.categorical.values[3].values;           
+                longsTo: any[] = dataView.categorical.values[3].values,
+                stateValues: any[] = dataView.categorical.values[4] ? dataView.categorical.values[4].values : null;           
                 
             let tooltipColumns: DataViewValueColumn[] = [];
             
@@ -491,6 +546,7 @@ module powerbi.extensibility.visual {
                     longitudeFrom: longsFrom[index],
                     latitudeTo: latsTo[index],
                     longitudeTo: longsTo[index],
+                    stateValue: stateValues ? stateValues[index] : null,
                     tooltip: tooltips[index]
                 });
             });
@@ -510,7 +566,7 @@ module powerbi.extensibility.visual {
             
             
             //let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
-            let arc = this.createCurvedLine(fromLatLng, toLatLng, direction.market, settings);          
+            let arc = this.createCurvedLine(fromLatLng, toLatLng, direction.market, settings, direction.stateValue);          
 
             this.setPopupToElement(direction.tooltip, arc);
             
