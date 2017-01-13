@@ -13,12 +13,18 @@
 		{
             "displayName": "Latitude From",
             "name": "latFrom",
-            "kind": "Measure"
+            "kind": "Measure",
+            "requiredTypes": [
+                { "numeric": true }
+            ]
         },
 		{
             "displayName": "Longitude From",
             "name": "longFrom",
-            "kind": "Measure"
+            "kind": "Measure",
+            "requiredTypes": [
+                { "numeric": true }
+            ]
         },
 		{
             "displayName": "Location To",
@@ -28,22 +34,34 @@
 		{
             "displayName": "Latitude To",
             "name": "latTo",
-            "kind": "Measure"
+            "kind": "Measure",
+            "requiredTypes": [
+                { "numeric": true }
+            ]
         },
 		{
             "displayName": "Longitude To",
             "name": "longTo",
-            "kind": "Measure"
+            "kind": "Measure",
+            "requiredTypes": [
+                { "numeric": true }
+            ]
         },
         {
             "displayName": "State value",
             "name": "stateValue",
-            "kind": "Measure"
+            "kind": "Measure",
+            "requiredTypes": [
+                { "numeric": true }
+            ]
         },
         {
             "displayName": "Thickness",
             "name": "thickness",
-            "kind": "Measure"
+            "kind": "Measure",
+            "requiredTypes": [
+                { "numeric": true }
+            ]
         },
         {
             "displayName": "Tooltips",

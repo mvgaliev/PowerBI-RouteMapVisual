@@ -498,7 +498,12 @@ module powerbi.extensibility.visual {
         public render(): void {
             this.map.addLayer(this.routeMapDataView.arcsLayer);
             this.map.addLayer(this.routeMapDataView.markersLayer);
-            this.map.fitBounds(this.routeMapDataView.arcsLayer.getBounds());
+            
+            let bounds = this.routeMapDataView.arcsLayer.getBounds();
+            
+            if(bounds && bounds.isValid()) {
+                this.map.fitBounds(bounds);    
+            }          
             
             this.setLabelFontColor(this.settings.markers.getLabelFontColor());            
         }
