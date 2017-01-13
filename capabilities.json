@@ -118,6 +118,10 @@
                     "stateValue": {
                         "min": 0,
                         "max": 1
+                    },
+                    "thickness": {
+                        "min": 0,
+                        "max": 1
                     }
 				}
 			],
@@ -176,7 +180,7 @@
                     }
                 },
                 "maxThickness": {
-                    "displayName": "Min thickness",
+                    "displayName": "Max thickness",
                     "type": {
                         "numeric": true
                     }

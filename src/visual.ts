@@ -577,6 +577,8 @@ module powerbi.extensibility.visual {
         }
         
         private initThicknessCoefficient(directions: Direction[]) {
+            this.thicknessOptions = null;
+            
             if(!this.settings.routes.minThickness || !this.settings.routes.maxThickness) {
                 return;
             }
