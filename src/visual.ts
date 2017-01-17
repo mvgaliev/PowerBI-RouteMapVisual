@@ -519,7 +519,6 @@ module powerbi.extensibility.visual {
         private parseDataViewToDirections(dataView: DataView): Direction[] {
             let directions: Direction[] = [];
 
-            let marketCategory = dataView.categorical.categories[0];
             let codesFrom: any[] = dataView.categorical.categories[1].values,
                 codesTo: any[] = dataView.categorical.categories[2].values,
                 markets: any[] = dataView.categorical.categories[0].values;
@@ -648,7 +647,7 @@ module powerbi.extensibility.visual {
             let marker = this.createCustomizableMarker(latLng, settings);
 
             let label = isDestinationPoint ? direction.locationTo : direction.locationFrom;
-            this.setLabelToElement(label, marker);
+            this.setLabelToElement(label.toString(), marker);
 
             let lat = isDestinationPoint ? direction.latitudeTo : direction.latitudeFrom;
             let long = isDestinationPoint ? direction.longitudeTo : direction.longitudeFrom;
