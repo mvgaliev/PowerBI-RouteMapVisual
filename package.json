@@ -1,5 +1,12 @@
 {
   "name": "powerbi-visuals-route-map",
+  "scripts": {
+    "postinstall": "typings install && pbiviz update 1.3.0",
+    "typings": "typings",
+    "pbiviz": "pbiviz",
+    "start": "pbiviz start",
+    "package": "pbiviz package"
+  },
   "devDependencies": {
     "@types/leaflet": "1.0.38",
     "powerbi-visuals-utils-dataviewutils": "^0.3.0"
