@@ -25,6 +25,9 @@
  */
 
 module powerbi.extensibility.visual {
+    
+    import TooltipEnabledDataPoint = powerbi.extensibility.utils.tooltip.TooltipEnabledDataPoint;
+    
     export interface RouteMapDataView {
         markers: RouteMapMarkerList,
         arcs: RouteMapArcList,
@@ -47,7 +50,7 @@ module powerbi.extensibility.visual {
         isSelected: boolean
     }
     
-    export interface RouteMapArc {
+    export interface RouteMapArc extends TooltipEnabledDataPoint {
         arc: L.Polyline, 
         markers: RouteMapMarker[],
         isSelected: boolean,
@@ -76,6 +79,6 @@ module powerbi.extensibility.visual {
         longitudeTo: number,
         stateValue: number,
         thickness: number,
-        tooltip: string      
+        tooltipInfo: VisualTooltipDataItem[]      
     }
 }

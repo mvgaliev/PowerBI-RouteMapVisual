@@ -4,12 +4,14 @@
     "@types/leaflet": "1.0.38",
     "powerbi-visuals-utils-dataviewutils": "^0.3.0"
   },
-  "dependencies": {
+  "dependencies": {    
+    "d3": "3.5.5",
     "geojson": "0.4.0",
     "jquery": "^3.1.1",
     "leaflet": "1.0.2",
     "leaflet-arc": "1.0.2",
     "leaflet-curve": "^1.0.0",
+    "powerbi-visuals-utils-tooltiputils": "^0.3.0",
     "typings": "1.5.0"
   }
 }

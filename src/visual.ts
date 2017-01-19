@@ -27,7 +27,16 @@
 module powerbi.extensibility.visual {
     import DataViewObjects = powerbi.DataViewObjects;
     import DataViewValueColumn = powerbi.DataViewValueColumn;
+	
+	import Selection = d3.Selection;
+    import UpdateSelection = d3.selection.Update;
     
+    import tooltip = powerbi.extensibility.utils.tooltip;
+    import TooltipEnabledDataPoint = powerbi.extensibility.utils.tooltip.TooltipEnabledDataPoint;
+    import TooltipEventArgs = powerbi.extensibility.utils.tooltip.TooltipEventArgs;    
+    import ITooltipServiceWrapper = powerbi.extensibility.utils.tooltip.ITooltipServiceWrapper;    
+    import createTooltipServiceWrapper = powerbi.extensibility.utils.tooltip.createTooltipServiceWrapper;
+
     const labelSelector = ".route-map-label";
     const labelClassName = "route-map-label";
     export class Visual implements IVisual {
@@ -42,7 +51,10 @@ module powerbi.extensibility.visual {
         private host: IVisualHost;
         private isFirstMultipleSelection: boolean = true;
         private thicknessOptions: ThicknessOptions;
+        private tooltipServiceWrapper: ITooltipServiceWrapper;
 
+        private root: Selection<any>;
+        
         private settings: RouteMapSettings;
 
         constructor(options: VisualConstructorOptions) {
@@ -51,13 +63,18 @@ module powerbi.extensibility.visual {
 
         public init(options: VisualConstructorOptions): void {
             this.selectionManager = options.host.createSelectionManager();
-            this.host = options.host;
-
+            this.host = options.host;            
+            
             this.targetHtmlElement = options.element;
 
-            this.addMapDivToDocument();
+            this.addMapDivToDocument();         
+            this.tooltipServiceWrapper = createTooltipServiceWrapper(
+                this.host.tooltipService,
+                options.element);
 
             this.hostContainer = $(this.targetHtmlElement).css('overflow-x', 'hidden');
+
+            this.root = d3.select(this.targetHtmlElement);
             this.initMap();
         }
 
@@ -148,7 +165,7 @@ module powerbi.extensibility.visual {
 
         public initMap(): void {
 
-            this.map = L.map('map').setView([33.9415839, -118.4435494], 3);
+            this.map = L.map('map').setView([33.9415839, -118.4435494], 3);                      
 
             //add map tile
             var layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -275,12 +292,6 @@ module powerbi.extensibility.visual {
             return curve;
         }
 
-        private addMarkersToLayer(markers: L.Marker[], layer: L.FeatureGroup): void {
-            markers.forEach((item) => {
-                layer.addLayer(item);
-            });
-        }
-
         public updateContainerViewports(viewport: IViewport) {
             // handle resize            
             var width = viewport.width;
@@ -294,7 +305,7 @@ module powerbi.extensibility.visual {
             document.getElementById('map').style.height = viewport.height.toString() + "px";
         }
 
-        private setPopupToElement(content: string, element: any): void { 
+        private setPopupToElement(content: string, element: any): void {            
             
             if(!content) {
                 return;
@@ -505,7 +516,30 @@ module powerbi.extensibility.visual {
                 this.map.fitBounds(bounds);    
             }          
             
-            this.setLabelFontColor(this.settings.markers.getLabelFontColor());            
+            this.setLabelFontColor(this.settings.markers.getLabelFontColor());  
+            
+            this.tooltipServiceWrapper.addTooltip<TooltipEnabledDataPoint>(this.getArcsSelection(),(tooltipEvent: TooltipEventArgs<TooltipEnabledDataPoint>) => {
+                return tooltipEvent.data.tooltipInfo;
+            });         
+        }
+        
+        private getArcsSelection(): UpdateSelection<RouteMapArc> {
+            let arcsSelection: UpdateSelection<RouteMapArc>;
+			let arcsElements: Selection<RouteMapArc>;
+			
+			arcsElements = this.root.select("g").selectAll(".leaflet-interactive");
+            
+            let array = [];                      
+            
+            for(var item in this.routeMapDataView.arcs) {
+                array.push(this.routeMapDataView.arcs[item]);
+            } 
+            
+			arcsSelection = arcsElements.data(array.filter((arc) => {
+                return arc.tooltipInfo.length > 0;
+            }));
+            
+            return arcsSelection;
         }
 
         public clearMap(): void {
@@ -546,22 +580,16 @@ module powerbi.extensibility.visual {
                     thicknesses = column.values;
                 }
             }    
-            
-            let tooltips: string[] = [];
-            
-            if(tooltipColumns.length > 0) {
-                for(var k = 0; k < tooltipColumns[0].values.length; ++k) {
-                    let tooltip: string = tooltipColumns[0].source.displayName + ": " + tooltipColumns[0].values[k];
-                    
-                    for(var j = 1; j < tooltipColumns.length; ++j) {
-                        tooltip += "<br>" + tooltipColumns[j].source.displayName  + ": " + tooltipColumns[j].values[k];
-                    }
-                    
-                    tooltips.push(tooltip);
-                }
-            }      
 
-            markets.forEach((item: any, index: number) => {                
+            markets.forEach((item: any, index: number) => {           
+                let tooltipInfo: VisualTooltipDataItem[] = [];
+                tooltipColumns.forEach((column) => {
+                    let name = column.source.displayName;
+                    let value = column.values[index] ? column.values[index].toString() : "";
+                    
+                    tooltipInfo.push({displayName: name, value: value});
+                });
+                     
                 directions.push({
                     market: markets[index],
                     index: index,
@@ -573,7 +601,7 @@ module powerbi.extensibility.visual {
                     longitudeTo: longsTo[index],
                     stateValue: stateValues ? stateValues[index] : null,
                     thickness: thicknesses ? thicknesses[index] : null,
-                    tooltip: tooltips[index]
+                    tooltipInfo: tooltipInfo
                 });
             });                      
             
@@ -626,7 +654,7 @@ module powerbi.extensibility.visual {
             //let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
             let arc = this.createCurvedLine(direction, settings);          
 
-            this.setPopupToElement(direction.tooltip, arc);
+            //this.setPopupToElement(direction.tooltip, arc);
             
             this.setOnArcClickEvent(arc);
 
@@ -637,6 +665,7 @@ module powerbi.extensibility.visual {
             return {
                 arc: arc,
                 markers: [],
+                tooltipInfo: direction.tooltipInfo,
                 isSelected: false,
                 selectionId: selectionId
             };
