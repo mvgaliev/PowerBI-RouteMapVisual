@@ -194,6 +194,12 @@ module powerbi.extensibility.visual {
                 this.routeMapDataView = this.converter(dataView);
                 this.render();
             }
+            
+            let bounds = this.routeMapDataView.arcsLayer.getBounds();
+            
+            if(bounds && bounds.isValid()) {
+                this.map.fitBounds(bounds);    
+            }       
 
             this.map.invalidateSize();
             this.updateContainerViewports(options.viewport);
@@ -359,7 +365,9 @@ module powerbi.extensibility.visual {
         private setOnMarkerClickEvent(element: L.CircleMarker): void {
             let me = this;
 
-            element.on('click', function (e) {                
+            element.on('click', function (e) {                           
+                (e as L.MouseEvent).originalEvent.preventDefault();    
+                   
                 let markers = me.routeMapDataView.markers;
                 let arcs = me.routeMapDataView.arcs;
                 
@@ -509,12 +517,6 @@ module powerbi.extensibility.visual {
         public render(): void {
             this.map.addLayer(this.routeMapDataView.arcsLayer);
             this.map.addLayer(this.routeMapDataView.markersLayer);
-            
-            let bounds = this.routeMapDataView.arcsLayer.getBounds();
-            
-            if(bounds && bounds.isValid()) {
-                this.map.fitBounds(bounds);    
-            }          
             
             this.setLabelFontColor(this.settings.markers.getLabelFontColor());  
             
@@ -681,8 +683,8 @@ module powerbi.extensibility.visual {
             let lat = isDestinationPoint ? direction.latitudeTo : direction.latitudeFrom;
             let long = isDestinationPoint ? direction.longitudeTo : direction.longitudeFrom;
             
-            let popupMessage = "Lat: " + lat + "<br>Long: " + long;
-            this.setPopupToElement(popupMessage, marker);
+            //let popupMessage = "Lat: " + lat + "<br>Long: " + long;
+            //this.setPopupToElement(popupMessage, marker);
             this.setOnMarkerClickEvent(marker);
 
             return {
