@@ -36,6 +36,8 @@ module powerbi.extensibility.visual {
     import TooltipEventArgs = powerbi.extensibility.utils.tooltip.TooltipEventArgs;    
     import ITooltipServiceWrapper = powerbi.extensibility.utils.tooltip.ITooltipServiceWrapper;    
     import createTooltipServiceWrapper = powerbi.extensibility.utils.tooltip.createTooltipServiceWrapper;
+    import IValueFormatter = powerbi.extensibility.utils.formatting.IValueFormatter;
+    import ValueFormatter = powerbi.extensibility.utils.formatting.valueFormatter;
 
     const labelSelector = ".route-map-label";
     const labelClassName = "route-map-label";
@@ -585,11 +587,13 @@ module powerbi.extensibility.visual {
 
             markets.forEach((item: any, index: number) => {           
                 let tooltipInfo: VisualTooltipDataItem[] = [];
-                tooltipColumns.forEach((column) => {
-                    let name = column.source.displayName;
-                    let value = column.values[index] ? column.values[index].toString() : "";
+                tooltipColumns.forEach((column) => {                    
+                    let format = ValueFormatter.getFormatStringByColumn(column.source),
+                    formatter = ValueFormatter.create(format),
+                    name = column.source.displayName,
+                    value = column.values[index] ? column.values[index].toString() : "";                                   
                     
-                    tooltipInfo.push({displayName: name, value: value});
+                    tooltipInfo.push({displayName: name, value: formatter.format(value)});
                 });
                      
                 directions.push({
