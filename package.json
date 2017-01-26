@@ -17,7 +17,6 @@
     "globalize": "0.1.0-a2",
     "jquery": "^3.1.1",
     "leaflet": "1.0.2",
-    "leaflet-arc": "1.0.2",
     "leaflet-curve": "^1.0.0",
     "lodash": "^4.17.4",
     "powerbi-visuals-utils-formattingutils": "^0.2.2",

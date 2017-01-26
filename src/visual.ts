@@ -38,6 +38,19 @@ module powerbi.extensibility.visual {
     import createTooltipServiceWrapper = powerbi.extensibility.utils.tooltip.createTooltipServiceWrapper;
     import IValueFormatter = powerbi.extensibility.utils.formatting.IValueFormatter;
     import ValueFormatter = powerbi.extensibility.utils.formatting.valueFormatter;
+    
+    // powerbi.extensibility.utils.svg
+    import IMargin = powerbi.extensibility.utils.svg.IMargin;
+    import translate = powerbi.extensibility.utils.svg.translate;
+    import ClassAndSelector = powerbi.extensibility.utils.svg.CssConstants.ClassAndSelector;
+    import createClassAndSelector = powerbi.extensibility.utils.svg.CssConstants.createClassAndSelector;
+
+    // powerbi.extensibility.utils.type
+    import pixelConverterFromPoint = powerbi.extensibility.utils.type.PixelConverter.fromPoint;
+
+    // powerbi.extensibility.utils.formatting
+    import TextProperties = powerbi.extensibility.utils.formatting.TextProperties;
+    import textMeasurementService = powerbi.extensibility.utils.formatting.textMeasurementService;
 
     const labelSelector = ".route-map-label";
     const labelClassName = "route-map-label";
@@ -588,12 +601,11 @@ module powerbi.extensibility.visual {
             markets.forEach((item: any, index: number) => {           
                 let tooltipInfo: VisualTooltipDataItem[] = [];
                 tooltipColumns.forEach((column) => {                    
-                    let format = ValueFormatter.getFormatStringByColumn(column.source),
-                    formatter = ValueFormatter.create(format),
+                    let format = ValueFormatter.getFormatStringByColumn(column.source, true),
                     name = column.source.displayName,
-                    value = column.values[index] ? column.values[index].toString() : "";                                   
+                    value = column.values[index] ? column.values[index] : "";                                   
                     
-                    tooltipInfo.push({displayName: name, value: formatter.format(value)});
+                    tooltipInfo.push({displayName: name, value: ValueFormatter.format(value, format)});
                 });
                      
                 directions.push({
