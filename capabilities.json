@@ -72,6 +72,47 @@
     "dataViewMappings": [
 		{
 			"conditions": [
+                {
+                    "market": {
+                        "min": 1,
+                        "max": 1 
+                    },
+					"codeFrom": {
+                        "min": 1,
+                        "max": 1 
+                    },
+					"latFrom": {
+                        "min": 1,
+                        "max": 1 
+                    },
+					"longFrom": {
+                        "min": 1,
+                        "max": 1 
+                    },					
+					"codeTo": {
+                        "min": 1,
+                        "max": 1 
+                    },
+					"latTo": {
+                        "min": 1,
+                        "max": 1 
+                    },
+					"longTo": {
+                        "min": 1,
+                        "max": 1 
+                    },
+                    "stateValue": {
+                        "min": 0,
+                        "max": 1 
+                    },
+                    "thickness": {
+                        "min": 0,
+                        "max": 1 
+                    },
+                    "tooltips": { 
+                        "min": 0 
+                    } 
+				},
 				{
                     "market": {
                         "max": 1
@@ -106,41 +147,44 @@
 				},
                 {
                     "market": {
-                        "min": 1,
-                        "max": 1
+                        "min": 0,
+                        "max": 1 
                     },
 					"codeFrom": {
-                        "min": 1,
-                        "max": 1
+                        "min": 0,
+                        "max": 1 
                     },
 					"latFrom": {
-                        "min": 1,
-                        "max": 1
+                        "min": 0,
+                        "max": 1 
                     },
 					"longFrom": {
-                        "min": 1,
-                        "max": 1
+                        "min": 0,
+                        "max": 1 
                     },					
 					"codeTo": {
-                        "min": 1,
-                        "max": 1
+                        "min": 0,
+                        "max": 1 
                     },
 					"latTo": {
-                        "min": 1,
-                        "max": 1
+                        "min": 0,
+                        "max": 1 
                     },
 					"longTo": {
-                        "min": 1,
-                        "max": 1
+                        "min": 0,
+                        "max": 1 
                     },
                     "stateValue": {
                         "min": 0,
-                        "max": 1
+                        "max": 1 
                     },
                     "thickness": {
                         "min": 0,
-                        "max": 1
-                    }
+                        "max": 1 
+                    },
+                    "tooltips": { 
+                        "min": 0 
+                    } 
 				}
 			],
             "categorical": {

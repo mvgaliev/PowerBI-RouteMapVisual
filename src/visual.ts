@@ -228,10 +228,10 @@ module powerbi.extensibility.visual {
             return L.latLng((pointFrom.lat + pointTo.lat) / 2, (pointFrom.lng + pointTo.lng) / 2);
         };
         
-        private getRoot(angleCoeficient: number, radianLatitude: number, radianLongitude: number, distance: number): number[] {
+        private getRoot(angleCoeficient: number, latitude: number, longitude: number, distance: number): number[] {
             
-            var x0 = radianLatitude;
-            var y0 = radianLongitude;
+            var x0 = latitude;
+            var y0 = longitude;
             
             var k1 = angleCoeficient;
             var k2 = -k1 * x0 + y0;            
@@ -252,9 +252,9 @@ module powerbi.extensibility.visual {
             return rootArray;
         }
         
-        private getSpecialPointLatLng(fromLatLng: L.LatLng, toLatLng: L.LatLng, midLatLng: L.LatLng): L.LatLng {
-            let midLatRadian = midLatLng.lat * Math.PI / 180;
-            let midLngRadian = midLatLng.lng * Math.PI / 180;
+        private getSpecialPointLatLng(fromLatLng: L.LatLng, toLatLng: L.LatLng, midLatLng: L.LatLng, isMinus360Lng?: boolean): L.LatLng {
+            let midLat = midLatLng.lat;
+            let midLng = midLatLng.lng;
             
             let ang1 = (toLatLng.lng - fromLatLng.lng) / (toLatLng.lat - fromLatLng.lat);
             let ang2 = -(toLatLng.lat - fromLatLng.lat) / (toLatLng.lng - fromLatLng.lng);   
@@ -262,22 +262,22 @@ module powerbi.extensibility.visual {
             let deltaLat = toLatLng.lat - midLatLng.lat;
             let deltaLng = toLatLng.lng - midLatLng.lng;   
             
-            let distance = Math.sqrt(deltaLat * deltaLat + deltaLng * deltaLng)* Math.PI / 180;     
+            let distance = Math.sqrt(deltaLat * deltaLat + deltaLng * deltaLng);  
             
-            distance = distance > 0.5 ? distance / 2 : distance;
+            distance = distance * Math.PI / 180 > 0.6 ? distance / 2 : distance;
             
-            let latitudes = this.getRoot(ang2, midLatRadian, midLngRadian, distance);
+            let latitudes = this.getRoot(ang2, midLat, midLng, distance);
             let lat = fromLatLng.lat > 0 && toLatLng.lat > 0 ? latitudes[1]: latitudes[0];
-            let long = ((ang2 * (lat - midLatRadian) + midLngRadian) * 180 / Math.PI + 540) % 360 - 180;   
+            let long = ((ang2 * (lat - midLat) + midLng) );
             
-            return L.latLng(lat * 180/Math.PI, long);  
+            return L.latLng(lat, long );  
         }
         
         private createCurvedLine(direction: Direction, settings: RouteMapSettings): L.Polyline {
             let l: any = L;
             
-            let pointFrom = L.latLng(direction.latitudeFrom, direction.longitudeFrom),
-                pointTo = L.latLng(direction.latitudeTo, direction.longitudeTo); 
+            let pointFrom = direction.fromToLatLng.fromLatLng,
+                pointTo = direction.fromToLatLng.toLatLng;
             
             let midpoint = this.midpointTo(pointFrom, pointTo);                    
             
@@ -606,21 +606,22 @@ module powerbi.extensibility.visual {
                     value = column.values[index] ? column.values[index] : "";                                   
                     
                     tooltipInfo.push({displayName: name, value: ValueFormatter.format(value, format)});
-                });
+                });                         
+                
+                let fromToLatLng = this.getActualFromToLatLng(latsFrom[index], longsFrom[index], latsTo[index], longsTo[index]);
                      
-                directions.push({
-                    market: markets[index],
-                    index: index,
-                    locationFrom: codesFrom[index],
-                    locationTo: codesTo[index],
-                    latitudeFrom: latsFrom[index],
-                    longitudeFrom: longsFrom[index],
-                    latitudeTo: latsTo[index],
-                    longitudeTo: longsTo[index],
-                    stateValue: stateValues ? stateValues[index] : null,
-                    thickness: thicknesses ? thicknesses[index] : null,
-                    tooltipInfo: tooltipInfo
-                });
+                if(fromToLatLng !== null) {
+                    directions.push({
+                        market: markets[index],
+                        index: index,
+                        locationFrom: codesFrom[index],
+                        locationTo: codesTo[index],
+                        fromToLatLng: fromToLatLng,
+                        stateValue: stateValues ? stateValues[index] : null,
+                        thickness: thicknesses ? thicknesses[index] : null,
+                        tooltipInfo: tooltipInfo
+                    });
+                }                              
             });                      
             
             return directions;
@@ -658,21 +659,67 @@ module powerbi.extensibility.visual {
             };
         }
         
+        private getDistance(fromLatLng: L.LatLng, toLatLng: L.LatLng): number {
+            let deltaLat = toLatLng.lat - fromLatLng.lat;
+            let deltaLng = toLatLng.lng - fromLatLng.lng; 
+            
+            return Math.sqrt(deltaLat * deltaLat + deltaLng * deltaLng)* Math.PI / 180;  
+        }
+        
+        private getActualFromToLatLng(fromLat: number, fromLng: number, toLat: number, toLng: number): FromToLatLng {            
+            
+            if(fromLat === null || fromLng === null || toLat === null || toLng == null) {
+                return null;
+            }
+            
+            let fromLatLng = L.latLng(fromLat, fromLng),
+                toLatLng = L.latLng(toLat, toLng),
+                fromLatLng360 = L.latLng(fromLatLng.lat, fromLatLng.lng - 360),
+                toLatLng360 = L.latLng(toLatLng.lat, toLatLng.lng - 360);
+            
+            let distance1 = this.getDistance(fromLatLng, toLatLng),
+                distance2 = this.getDistance(fromLatLng360, toLatLng),
+                distance3 = this.getDistance(fromLatLng, toLatLng360),
+                distance4 = this.getDistance(fromLatLng360, toLatLng360);
+            
+            let minDistance = distance1,
+                fromToLatLng = { toLatLng: toLatLng, fromLatLng: fromLatLng, isFromLngMinus360: false, isToLngMinus360: false };
+            
+            if(distance2 < minDistance){
+                minDistance = distance2;
+                fromToLatLng.toLatLng = toLatLng;
+                fromToLatLng.fromLatLng = fromLatLng360;
+                fromToLatLng.isFromLngMinus360 = true;
+                fromToLatLng.isToLngMinus360 = false;                
+            }
+            
+            if(distance3 < minDistance){
+                minDistance = distance3;
+                fromToLatLng.toLatLng = toLatLng360;
+                fromToLatLng.fromLatLng = fromLatLng;
+                fromToLatLng.isFromLngMinus360 = false;
+                fromToLatLng.isToLngMinus360 = true;   
+            }
+            
+            if(distance4 < minDistance && !(toLatLng360.lng < -180 && fromLatLng360.lng < -180)){
+                minDistance = distance4;
+                fromToLatLng.toLatLng = toLatLng360;
+                fromToLatLng.fromLatLng = fromLatLng360;
+                fromToLatLng.isFromLngMinus360 = true;
+                fromToLatLng.isToLngMinus360 = true;   
+            }
+            
+            return fromToLatLng;
+        }
+        
         private createRouteMapArc(direction: Direction, 
                                        settings: RouteMapSettings, 
-                                       selectionCategoryColumn: DataViewCategoricalColumn): RouteMapArc {
-                                           
-            let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom),
-                toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo);            
+                                       selectionCategoryColumn: DataViewCategoricalColumn): RouteMapArc {                                                                                             
 
             let locationFrom = direction.locationFrom,
-                locationTo = direction.locationTo;
-            
-            
-            //let arc = this.createCustomizableArc(fromLatLng, toLatLng, settings);
-            let arc = this.createCurvedLine(direction, settings);          
+                locationTo = direction.locationTo;            
 
-            //this.setPopupToElement(direction.tooltip, arc);
+            let arc = this.createCurvedLine(direction, settings);          
             
             this.setOnArcClickEvent(arc);
 
@@ -696,11 +743,9 @@ module powerbi.extensibility.visual {
             let label = isDestinationPoint ? direction.locationTo : direction.locationFrom;
             this.setLabelToElement(label.toString(), marker);
 
-            let lat = isDestinationPoint ? direction.latitudeTo : direction.latitudeFrom;
-            let long = isDestinationPoint ? direction.longitudeTo : direction.longitudeFrom;
-            
-            //let popupMessage = "Lat: " + lat + "<br>Long: " + long;
-            //this.setPopupToElement(popupMessage, marker);
+            let lat = isDestinationPoint ? direction.fromToLatLng.toLatLng.lat : direction.fromToLatLng.fromLatLng.lat;
+            let long = isDestinationPoint ? direction.fromToLatLng.toLatLng.lng : direction.fromToLatLng.fromLatLng.lng;
+
             this.setOnMarkerClickEvent(marker);
 
             return {
@@ -729,7 +774,8 @@ module powerbi.extensibility.visual {
                 || !dataView.categorical.values[0]
                 || !dataView.categorical.values[1]
                 || !dataView.categorical.values[2]
-                || !dataView.categorical.values[3]) {
+                || !dataView.categorical.values[3]
+                || dataView.categorical.values[3].source.roles["tooltips"]) {
 
                 return {
                     arcs: {},
@@ -746,7 +792,8 @@ module powerbi.extensibility.visual {
             let marketCategory = dataView.categorical.categories[0];
 
             let processedArcs: RouteMapArcList = {},
-                processedMarkers: RouteMapMarkerList = {};
+                createdMarkers: RouteMapMarkerList = {},
+                createdMarkers360: RouteMapMarkerList = {};
 
             let markersLayer: L.FeatureGroup = L.featureGroup(),
                 arcsLayer: L.FeatureGroup = L.featureGroup();
@@ -757,11 +804,12 @@ module powerbi.extensibility.visual {
                     keyFrom = direction.locationFrom,
                     keyTo = direction.locationTo;
                     
-                if(!keyArc || !keyFrom || !keyTo 
-                || !direction.latitudeFrom || !direction.latitudeTo 
-                || !direction.longitudeFrom || !direction.longitudeTo) {
+                if(!keyArc || !keyFrom || !keyTo) {
                     continue;
-                }                    
+                }    
+                
+                let isFromLngMinus360 = direction.fromToLatLng.isFromLngMinus360,
+                    isToLngMinus360 = direction.fromToLatLng.isToLngMinus360;                
 
                 let routeMapArc = this.createRouteMapArc(direction, settings, marketCategory);    
 
@@ -771,30 +819,78 @@ module powerbi.extensibility.visual {
                 let routeMapMarkerFrom: RouteMapMarker,
                     routeMapMarkerTo: RouteMapMarker;
 
-                if (!processedMarkers[keyFrom]) {
-                    let fromLatLng = L.latLng(direction.latitudeFrom, direction.longitudeFrom);
+                if (!createdMarkers[keyFrom] && !isFromLngMinus360) {
+                    let fromLatLng = direction.fromToLatLng.fromLatLng;
                     routeMapMarkerFrom = this.createRouteMapMarker(direction, false, fromLatLng, settings);
 
-                    processedMarkers[keyFrom] = routeMapMarkerFrom;
-                    markersLayer.addLayer(routeMapMarkerFrom.marker);
-                } else {
-                    routeMapMarkerFrom = processedMarkers[keyFrom];
-                }
+                    createdMarkers[keyFrom] = routeMapMarkerFrom;
+                } else if(!createdMarkers360[keyFrom] && isFromLngMinus360) {
+                    let fromLatLng = direction.fromToLatLng.fromLatLng;
+                    routeMapMarkerFrom = this.createRouteMapMarker(direction, false, fromLatLng, settings);
 
-                if (!processedMarkers[keyTo]) {
-                    let toLatLng = L.latLng(direction.latitudeTo, direction.longitudeTo); 
+                    createdMarkers360[keyFrom] = routeMapMarkerFrom;
+                } else if(createdMarkers[keyFrom] && !isFromLngMinus360) {
+                    routeMapMarkerFrom = createdMarkers[keyFrom];
+                } else if(createdMarkers360[keyFrom] && isFromLngMinus360) {
+                    routeMapMarkerFrom = createdMarkers360[keyFrom];
+                }                
+
+                if (!createdMarkers[keyTo] && !isToLngMinus360) {
+                    let toLatLng = direction.fromToLatLng.toLatLng; 
                     routeMapMarkerTo = this.createRouteMapMarker(direction, true, toLatLng, settings);
 
-                    processedMarkers[keyTo] = routeMapMarkerTo;
-                    markersLayer.addLayer(routeMapMarkerTo.marker);
-                } else {
-                    routeMapMarkerTo = processedMarkers[keyTo];
-                }
+                    createdMarkers[keyTo] = routeMapMarkerTo;
+                    
+                } else if(!createdMarkers360[keyTo] && isToLngMinus360) {
+                    let toLatLng = direction.fromToLatLng.toLatLng;
+                    routeMapMarkerTo = this.createRouteMapMarker(direction, true, toLatLng, settings);
+                    createdMarkers360[keyTo] = routeMapMarkerTo;
+                    
+                } else if(createdMarkers[keyTo] && !isToLngMinus360) {
+                    routeMapMarkerTo = createdMarkers[keyTo];
+                } else if(createdMarkers360[keyTo] && isToLngMinus360) {
+                    routeMapMarkerTo = createdMarkers360[keyTo];
+                }  
 
-                processedMarkers[keyFrom].arcs.push(routeMapArc);
-                processedMarkers[keyTo].arcs.push(routeMapArc);
+                if(!isFromLngMinus360) {
+                    createdMarkers[keyFrom].arcs.push(routeMapArc);
+                } else {
+                    createdMarkers360[keyFrom].arcs.push(routeMapArc);
+                }
+                
+                if(!isToLngMinus360) {
+                    createdMarkers[keyTo].arcs.push(routeMapArc);
+                } else {
+                    createdMarkers360[keyTo].arcs.push(routeMapArc);
+                }                
+
                 processedArcs[keyArc].markers.push(routeMapMarkerFrom);
                 processedArcs[keyArc].markers.push(routeMapMarkerTo);
+            }
+            
+            let processedMarkers: RouteMapMarkerList = createdMarkers;
+            
+            for(var item in createdMarkers) {
+                markersLayer.addLayer(createdMarkers[item].marker);
+            }
+            
+            for(var item in createdMarkers360) {
+                let currentMarker = createdMarkers360[item];
+                
+                if(processedMarkers[item]) {
+                    let processedMarker = processedMarkers[item];                                     
+                    let arcsArray = processedMarker.arcs.concat(currentMarker.arcs);
+                    
+                    processedMarker.arcs = arcsArray;
+                    currentMarker.arcs = arcsArray;
+                    
+                    processedMarkers[item + "_360"] = currentMarker;                   
+                                   
+                } else {
+                    processedMarkers[item + "_360"] = currentMarker;
+                }
+                
+                markersLayer.addLayer(processedMarkers[item + "_360"].marker);     
             }
 
             this.isDataValid = true;                  

@@ -50,6 +50,13 @@ module powerbi.extensibility.visual {
         isSelected: boolean
     }
     
+    export interface FromToLatLng {
+        toLatLng: L.LatLng,
+        fromLatLng: L.LatLng,
+        isFromLngMinus360: boolean,
+        isToLngMinus360: boolean
+    }
+    
     export interface RouteMapArc extends TooltipEnabledDataPoint {
         arc: L.Polyline, 
         markers: RouteMapMarker[],
@@ -73,12 +80,9 @@ module powerbi.extensibility.visual {
         index: number,
         locationFrom: string,
         locationTo: string,
-        latitudeFrom: number,
-        longitudeFrom: number,
-        latitudeTo: number,
-        longitudeTo: number,
+        fromToLatLng: FromToLatLng,
         stateValue: number,
         thickness: number,
-        tooltipInfo: VisualTooltipDataItem[]      
+        tooltipInfo: VisualTooltipDataItem[]  
     }
 }
