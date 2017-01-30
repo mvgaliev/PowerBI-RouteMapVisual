@@ -286,7 +286,7 @@ module powerbi.extensibility.visual {
             let stateValue = direction.stateValue;
             let color;
             
-            if(stateValue !== undefined) {
+            if(stateValue !== undefined && stateValue !== null) {
                 if (stateValue <= settings.state1.dataMax && stateValue >= settings.state1.dataMin) {
                     color = settings.state1.getStateColor();
 

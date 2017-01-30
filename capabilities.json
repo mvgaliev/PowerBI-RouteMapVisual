@@ -220,7 +220,7 @@
             "displayName": "Routes",
             "properties": {
                 "arcColor": {
-                    "displayName": "Default arc color",
+                    "displayName": "Default color",
                     "type": {
                         "fill": {
                             "solid": {
