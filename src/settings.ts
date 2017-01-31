@@ -62,16 +62,12 @@ module powerbi.extensibility.visual {
     
     export class RouteMapStateSettings {
         public stateColor: CustomColor;
-        public dataMin: number;
-        public dataMax: number;
         
         public getStateColor() {
             return this.stateColor.solid.color;
         }
         
-        public constructor(dataMin: number, dataMax: number, color: string) {
-            this.dataMax = dataMax;
-            this.dataMin = dataMin;
+        public constructor(color: string) {
             this.stateColor = new CustomColor(color);
         }
     }
@@ -79,8 +75,8 @@ module powerbi.extensibility.visual {
     export class RouteMapSettings extends DataViewObjectsParser {
         public routes: RouteMapRoutesSettings = new RouteMapRoutesSettings();
         public markers: RouteMapMarkersSettings = new RouteMapMarkersSettings();
-        public state1: RouteMapStateSettings = new RouteMapStateSettings(-Infinity, 0, "red");
-        public state2: RouteMapStateSettings = new RouteMapStateSettings(0, 1, "yellow");
-        public state3: RouteMapStateSettings = new RouteMapStateSettings(1, Infinity, "green");
+        public state1: RouteMapStateSettings = new RouteMapStateSettings("red");
+        public state2: RouteMapStateSettings = new RouteMapStateSettings("yellow");
+        public state3: RouteMapStateSettings = new RouteMapStateSettings("green");
     }
 }

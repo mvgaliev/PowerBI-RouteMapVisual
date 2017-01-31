@@ -82,7 +82,15 @@ module powerbi.extensibility.visual {
         locationTo: string,
         fromToLatLng: FromToLatLng,
         stateValue: number,
-        thickness: number,
+        stateValueMin1: number,
+        stateValueMax1: number,
+        stateValueMin2: number,
+        stateValueMax2: number,
+        stateValueMin3: number,
+        stateValueMax3: number,
+        thicknessValue: number,
+        thicknessMin: number,
+        thicknessMax: number,
         tooltipInfo: VisualTooltipDataItem[]  
     }
 }

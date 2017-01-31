@@ -65,7 +65,6 @@ module powerbi.extensibility.visual {
         private selectionManager: ISelectionManager;
         private host: IVisualHost;
         private isFirstMultipleSelection: boolean = true;
-        private thicknessOptions: ThicknessOptions;
         private tooltipServiceWrapper: ITooltipServiceWrapper;
 
         private root: Selection<any>;
@@ -117,8 +116,7 @@ module powerbi.extensibility.visual {
                         displayName: "Markers",
                         properties: {
                             markerColor: this.settings.markers.getMarkerColor(),
-                            labelFontColor: this.settings.markers.getLabelFontColor(),
-                            
+                            labelFontColor: this.settings.markers.getLabelFontColor(),                            
                             radius: this.settings.markers.radius                           
                         },
                         selector: null
@@ -129,9 +127,7 @@ module powerbi.extensibility.visual {
                         objectName: objectName,
                         displayName: "State 1",
                         properties: {
-                            stateColor: this.settings.state1.getStateColor(),
-                            dataMin: this.settings.state1.dataMin,
-                            dataMax: this.settings.state1.dataMax
+                            stateColor: this.settings.state1.getStateColor()
                         },
                         selector: null
                     });
@@ -141,9 +137,7 @@ module powerbi.extensibility.visual {
                         objectName: objectName,
                         displayName: "State 2",
                         properties: {
-                            stateColor: this.settings.state2.getStateColor(),
-                            dataMin: this.settings.state2.dataMin,
-                            dataMax: this.settings.state2.dataMax
+                            stateColor: this.settings.state2.getStateColor()
                         },
                         selector: null
                     });
@@ -153,9 +147,7 @@ module powerbi.extensibility.visual {
                         objectName: objectName,
                         displayName: "State 3",
                         properties: {
-                            stateColor: this.settings.state3.getStateColor(),
-                            dataMin: this.settings.state3.dataMin,
-                            dataMax: this.settings.state3.dataMax
+                            stateColor: this.settings.state3.getStateColor()
                         },
                         selector: null
                     });
@@ -287,13 +279,13 @@ module powerbi.extensibility.visual {
             let color;
             
             if(stateValue !== undefined && stateValue !== null) {
-                if (stateValue <= settings.state1.dataMax && stateValue >= settings.state1.dataMin) {
+                if (stateValue <= direction.stateValueMax1 && stateValue >= direction.stateValueMin1) {
                     color = settings.state1.getStateColor();
 
-                } else if (stateValue <=  settings.state2.dataMax && stateValue >= settings.state2.dataMin) {
+                } else if (stateValue <= direction.stateValueMax2 && stateValue >= direction.stateValueMin2) {
                     color = settings.state2.getStateColor();
 
-                } else if (stateValue <= settings.state3.dataMax && stateValue >= settings.state3.dataMin) {
+                } else if (stateValue <= direction.stateValueMax3 && stateValue >= direction.stateValueMin3) {
                     color = settings.state3.getStateColor();
                 } else {
                     color = settings.routes.getArcColor();
@@ -302,8 +294,10 @@ module powerbi.extensibility.visual {
                 color = settings.routes.getArcColor();
             }
             
-            let thickness = this.thicknessOptions 
-                        ? settings.routes.minThickness + (direction.thickness - this.thicknessOptions.minValue) * this.thicknessOptions.coeficient 
+            let thicknessOptions = this.getThicknessOptions(direction);
+            
+            let thickness = thicknessOptions
+                        ? settings.routes.minThickness + (direction.thicknessValue - thicknessOptions.minValue) * thicknessOptions.coeficient 
                         : settings.routes.defaultThickness;
             
             let curve = l.curve(['M',[pointFrom.lat, pointFrom.lng],
@@ -579,7 +573,15 @@ module powerbi.extensibility.visual {
                 longsFrom: any[] = dataView.categorical.values[1].values,
                 longsTo: any[] = dataView.categorical.values[3].values,
                 stateValues: any[],
-                thicknesses: any[];           
+                stateValuesMin1: any[],
+                stateValuesMax1: any[],
+                stateValuesMin2: any[],
+                stateValuesMax2: any[],
+                stateValuesMin3: any[],
+                stateValuesMax3: any[],
+                thicknessValues: any[],
+                thicknessValuesMin: any[],
+                thicknessValuesMax: any[];           
                 
             let tooltipColumns: DataViewValueColumn[] = [];
             
@@ -593,8 +595,40 @@ module powerbi.extensibility.visual {
                     stateValues = column.values;
                 } 
                 
-                if(column.source && column.source.roles["thickness"]) {
-                    thicknesses = column.values;
+                if(column.source && column.source.roles["stateValueMin1"]) {
+                    stateValuesMin1 = column.values;
+                } 
+                
+                if(column.source && column.source.roles["stateValueMax1"]) {
+                    stateValuesMax1 = column.values;
+                } 
+                
+                if(column.source && column.source.roles["stateValueMin2"]) {
+                    stateValuesMin2 = column.values;
+                } 
+                
+                if(column.source && column.source.roles["stateValueMax2"]) {
+                    stateValuesMax2 = column.values;
+                } 
+                
+                if(column.source && column.source.roles["stateValueMin3"]) {
+                    stateValuesMin3 = column.values;
+                } 
+                
+                if(column.source && column.source.roles["stateValueMax3"]) {
+                    stateValuesMax3 = column.values;
+                } 
+                
+                if(column.source && column.source.roles["thicknessValue"]) {
+                    thicknessValues = column.values;
+                }
+                
+                if(column.source && column.source.roles["thicknessMin"]) {
+                    thicknessValuesMin = column.values;
+                }
+                
+                if(column.source && column.source.roles["thicknessMax"]) {
+                    thicknessValuesMax = column.values;
                 }
             }    
 
@@ -618,7 +652,15 @@ module powerbi.extensibility.visual {
                         locationTo: codesTo[index],
                         fromToLatLng: fromToLatLng,
                         stateValue: stateValues ? stateValues[index] : null,
-                        thickness: thicknesses ? thicknesses[index] : null,
+                        stateValueMin1: stateValuesMin1 ? stateValuesMin1[index] : null,
+                        stateValueMax1: stateValuesMax1 ? stateValuesMax1[index] : null,
+                        stateValueMin2: stateValuesMin2 ? stateValuesMin2[index] : null,
+                        stateValueMax2: stateValuesMax2 ? stateValuesMax2[index] : null,
+                        stateValueMin3: stateValuesMin3 ? stateValuesMin3[index] : null,
+                        stateValueMax3: stateValuesMax3 ? stateValuesMax3[index] : null,
+                        thicknessValue: thicknessValues ? thicknessValues[index] : null,
+                        thicknessMax: thicknessValuesMax ? thicknessValuesMax[index] : null,
+                        thicknessMin: thicknessValuesMin ? thicknessValuesMin[index] : null,
                         tooltipInfo: tooltipInfo
                     });
                 }                              
@@ -627,33 +669,22 @@ module powerbi.extensibility.visual {
             return directions;
         }
         
-        private initThicknessCoefficient(directions: Direction[]) {
-            this.thicknessOptions = null;
+        private getThicknessOptions(direction: Direction): ThicknessOptions {
             
-            if(!this.settings.routes.minThickness || !this.settings.routes.maxThickness) {
-                return;
+            if(!this.settings.routes.minThickness || !this.settings.routes.maxThickness || !direction.thicknessMin || !direction.thicknessMax) {
+                return null;
             }
             
-            let minValue = Number.MAX_VALUE,
-                maxValue = -Number.MAX_VALUE;
-                
-            directions.forEach((direction) => {
-                if(direction.thickness && direction.thickness > maxValue) {
-                    maxValue = direction.thickness;
-                }
-                
-                if(direction.thickness && direction.thickness < minValue) {
-                    minValue = direction.thickness;
-                }
-            });
-            
-            if(minValue == Number.MAX_VALUE || minValue === maxValue) {
-                return;
-            }
+            let minValue = direction.thicknessMin,
+                maxValue = direction.thicknessMax;
             
             let coef = (this.settings.routes.maxThickness - this.settings.routes.minThickness) / (maxValue - minValue);
             
-            this.thicknessOptions = {
+            if(coef === Number.NaN) {
+                return null;
+            }
+            
+            return {
                 coeficient: coef,
                 minValue: minValue 
             };
@@ -786,8 +817,6 @@ module powerbi.extensibility.visual {
             }                  
 
             let directions = this.parseDataViewToDirections(dataView);
-            
-            this.initThicknessCoefficient(directions);
             
             let marketCategory = dataView.categorical.categories[0];
 
