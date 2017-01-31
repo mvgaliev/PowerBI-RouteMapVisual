@@ -276,16 +276,21 @@ module powerbi.extensibility.visual {
             let specialPoint = this.getSpecialPointLatLng(pointFrom, pointTo, midpoint);                            
             
             let stateValue = direction.stateValue;
-            let color;
+            let color;            
             
             if(stateValue !== undefined && stateValue !== null) {
-                if (stateValue <= direction.stateValueMax1 && stateValue >= direction.stateValueMin1) {
+                let state1Min = direction.stateValueMin1 !== null ? direction.stateValueMin1 : -Number.MAX_VALUE,
+                    state1Max = direction.stateValueMax1 !== null ? direction.stateValueMax1 : Number.MAX_VALUE,
+                    state2Min = direction.stateValueMin2 !== null ? direction.stateValueMin2 : -Number.MAX_VALUE,
+                    state2Max = direction.stateValueMax2 !== null ? direction.stateValueMax2 : Number.MAX_VALUE,
+                    state3Min = direction.stateValueMin3 !== null ? direction.stateValueMin3 : -Number.MAX_VALUE,
+                    state3Max = direction.stateValueMax3 !== null ? direction.stateValueMax3 : Number.MAX_VALUE;                                  
+                
+                if (stateValue <= state1Max && stateValue >= state1Min && state1Min !== -state1Max) {
                     color = settings.state1.getStateColor();
-
-                } else if (stateValue <= direction.stateValueMax2 && stateValue >= direction.stateValueMin2) {
+                } else if (stateValue <= state2Max && stateValue >= state2Min && state2Min !== -state2Max) {
                     color = settings.state2.getStateColor();
-
-                } else if (stateValue <= direction.stateValueMax3 && stateValue >= direction.stateValueMin3) {
+                } else if (stateValue <= state3Max && stateValue >= state3Min && state3Min !== -state3Max) {
                     color = settings.state3.getStateColor();
                 } else {
                     color = settings.routes.getArcColor();
@@ -294,7 +299,10 @@ module powerbi.extensibility.visual {
                 color = settings.routes.getArcColor();
             }
             
-            let thicknessOptions = this.getThicknessOptions(direction);
+            let thicknessOptions;
+            if(direction.thicknessValue >= direction.thicknessMin && direction.thicknessValue <= direction.thicknessMax) {
+                thicknessOptions = this.getThicknessOptions(direction);      
+            }               
             
             let thickness = thicknessOptions
                         ? settings.routes.minThickness + (direction.thicknessValue - thicknessOptions.minValue) * thicknessOptions.coeficient 
