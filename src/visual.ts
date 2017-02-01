@@ -196,7 +196,7 @@ module powerbi.extensibility.visual {
                 let dataView: DataView = options
                     && options.dataViews
                     && options.dataViews[0];
-
+                
                 this.clearMap();
                 this.routeMapDataView = this.converter(dataView);
                 this.render();
@@ -326,27 +326,6 @@ module powerbi.extensibility.visual {
             // resize map     
             document.getElementById('map').style.width = viewport.width.toString() + "px";
             document.getElementById('map').style.height = viewport.height.toString() + "px";
-        }
-
-        private setPopupToElement(content: string, element: any): void {            
-            
-            if(!content) {
-                return;
-            }         
-                           
-            element.bindPopup(content, { autoPan: false });                  
-
-            let map = this.map;
-            
-            element.on("mouseover", function (e) {
-                this.openPopup(this, e.latlng);
-            });
-            
-            element.on('mouseout', function (e) {
-                if(this.getPopup().getContent()) {
-                    this.closePopup();
-                }                
-            });
         }
 
         private setLabelToElement(content: string, element: any): void {
@@ -795,10 +774,53 @@ module powerbi.extensibility.visual {
             };
         }
 
+        private limitProperties(settings: RouteMapSettings) {
+            let radius = settings.markers.radius;
+            
+            if(radius > RouteMapMarkersSettings.maximumPossibleRadius) {
+                radius = RouteMapMarkersSettings.maximumPossibleRadius;
+            } else if(radius < RouteMapMarkersSettings.minimunPossibleRadius) {
+                radius = RouteMapMarkersSettings.minimunPossibleRadius;
+            }
+            
+            settings.markers.radius = radius;
+            
+            let defaultThickness = settings.routes.defaultThickness;
+            
+            if(defaultThickness > RouteMapRoutesSettings.maximumPossibleThickness) {
+                defaultThickness = RouteMapRoutesSettings.maximumPossibleThickness;
+            } else if(defaultThickness < RouteMapRoutesSettings.minimumPossibleThickness) {
+                defaultThickness = RouteMapRoutesSettings.minimumPossibleThickness;
+            }
+            
+            settings.routes.defaultThickness = defaultThickness;
+            
+            let minThickness = settings.routes.minThickness;
+            
+            if(minThickness > RouteMapRoutesSettings.maximumPossibleThickness) {
+                minThickness = RouteMapRoutesSettings.maximumPossibleThickness;
+            } else if(minThickness < RouteMapRoutesSettings.minimumPossibleThickness) {
+                minThickness = RouteMapRoutesSettings.minimumPossibleThickness;
+            }
+            
+            settings.routes.minThickness = minThickness;
+            
+            let maxThickness = settings.routes.maxThickness;
+            
+            if(maxThickness > RouteMapRoutesSettings.maximumPossibleThickness) {
+                maxThickness = RouteMapRoutesSettings.maximumPossibleThickness;
+            } else if(maxThickness < RouteMapRoutesSettings.maximumPossibleThickness) {
+                maxThickness = RouteMapRoutesSettings.minimumPossibleThickness;
+            }
+            
+            settings.routes.maxThickness = maxThickness;                     
+        }
+
         public converter(dataView: DataView): RouteMapDataView {
 
             this.isDataValid = false;
             let settings = this.settings = this.parseSettings(dataView);
+            this.limitProperties(settings);
             
             if (!dataView
                 || !dataView.categorical

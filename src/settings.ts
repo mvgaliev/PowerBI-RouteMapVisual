@@ -36,6 +36,8 @@ module powerbi.extensibility.visual {
     }
 
     export class RouteMapRoutesSettings {
+        static maximumPossibleThickness: number = 50;
+        static minimumPossibleThickness: number = 0.1;
         public arcColor: CustomColor = new CustomColor("red"); 
         public defaultThickness: number = 3;
         public minThickness: number = 1;      
@@ -47,6 +49,9 @@ module powerbi.extensibility.visual {
     }
     
     export class RouteMapMarkersSettings {
+        static minimunPossibleRadius: number = 0.1;
+        static maximumPossibleRadius: number = 20;
+        
         public labelFontColor: CustomColor = new CustomColor("black");
         public markerColor: CustomColor = new CustomColor("blue");
         public radius: number = 6;
