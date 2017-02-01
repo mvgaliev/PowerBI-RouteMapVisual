@@ -809,7 +809,7 @@ module powerbi.extensibility.visual {
             
             if(maxThickness > RouteMapRoutesSettings.maximumPossibleThickness) {
                 maxThickness = RouteMapRoutesSettings.maximumPossibleThickness;
-            } else if(maxThickness < RouteMapRoutesSettings.maximumPossibleThickness) {
+            } else if(maxThickness < RouteMapRoutesSettings.minimumPossibleThickness) {
                 maxThickness = RouteMapRoutesSettings.minimumPossibleThickness;
             }
             
