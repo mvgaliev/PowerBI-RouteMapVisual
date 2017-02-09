@@ -265,15 +265,13 @@ module powerbi.extensibility.visual {
             return L.latLng(lat, long );  
         }
         
-        private createCurvedLine(direction: Direction, settings: RouteMapSettings): L.Polyline {
+        private createLine(direction: Direction, settings: RouteMapSettings): L.Polyline {
             let l: any = L;
             
             let pointFrom = direction.fromToLatLng.fromLatLng,
                 pointTo = direction.fromToLatLng.toLatLng;
             
-            let midpoint = this.midpointTo(pointFrom, pointTo);                    
-            
-            let specialPoint = this.getSpecialPointLatLng(pointFrom, pointTo, midpoint);                            
+            let midpoint = this.midpointTo(pointFrom, pointTo);                                                                
             
             let stateValue = direction.stateValue;
             let color;            
@@ -308,11 +306,9 @@ module powerbi.extensibility.visual {
                         ? settings.routes.minThickness + (direction.thicknessValue - thicknessOptions.minValue) * thicknessOptions.coeficient 
                         : settings.routes.defaultThickness;
             
-            let curve = l.curve(['M',[pointFrom.lat, pointFrom.lng],
-					   'Q',[specialPoint.lat, specialPoint.lng],
-						   [pointTo.lat, pointTo.lng]], {color: color, weight: thickness} );
+            let line = L.polyline([pointFrom, pointTo], {color: color, weight: thickness} );
             
-            return curve;
+            return line;
         }
 
         public updateContainerViewports(viewport: IViewport) {
@@ -737,7 +733,7 @@ module powerbi.extensibility.visual {
             let locationFrom = direction.locationFrom,
                 locationTo = direction.locationTo;            
 
-            let arc = this.createCurvedLine(direction, settings);          
+            let arc = this.createLine(direction, settings);          
             
             this.setOnArcClickEvent(arc);
 
