@@ -18,7 +18,7 @@
     "icon": "assets/icon.png"
   },
   "externalJS": [
-    "node_modules/leaflet/dist/leaflet.js",    
+    "external/leaflet.js",    
     "external/custom-leaflet-arc-l-init.js",
     "node_modules/jquery/dist/jquery.min.js",
     "node_modules/leaflet-curve/leaflet.curve.js",
