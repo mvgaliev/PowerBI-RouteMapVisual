@@ -25,56 +25,56 @@
  */
 
 module powerbi.extensibility.visual {
-    
+
     import TooltipEnabledDataPoint = powerbi.extensibility.utils.tooltip.TooltipEnabledDataPoint;
-    
+
     export interface RouteMapDataView {
         markers: RouteMapMarkerList,
         arcs: RouteMapArcList,
         arcsLayer: L.FeatureGroup,
         markersLayer: L.FeatureGroup
     }
-    
+
     export interface RouteMapMarkerList {
         [key: string]: RouteMapMarker;
     }
-    
+
     export interface RouteMapArcList {
         [key: string]: RouteMapArc;
     }
-    
-    export interface RouteMapMarker {
-        marker: L.CircleMarker, 
+
+    export interface RouteMapMarker extends TooltipEnabledDataPoint {
+        marker: L.CircleMarker,
         location: string,
         arcs: RouteMapArc[],
         isSelected: boolean
     }
-    
+
     export interface FromToLatLng {
         toLatLng: L.LatLng,
         fromLatLng: L.LatLng,
         isFromLngMinus360: boolean,
         isToLngMinus360: boolean
     }
-    
+
     export interface RouteMapArc extends TooltipEnabledDataPoint {
-        arc: L.Polyline, 
+        arc: L.Polyline,
         markers: RouteMapMarker[],
         isSelected: boolean,
         selectionId: ISelectionId
     }
-    
+
     export interface RouteMapPoint {
         name: string,
         latitude: number,
         longitude: number
     }
-    
+
     export interface ThicknessOptions {
         minValue: number,
         coeficient: number
-    } 
-    
+    }
+
     export interface Direction {
         market: string,
         index: number,
@@ -91,6 +91,8 @@ module powerbi.extensibility.visual {
         thicknessValue: number,
         thicknessMin: number,
         thicknessMax: number,
-        tooltipInfo: VisualTooltipDataItem[]  
+        tooltipInfo: VisualTooltipDataItem[],
+        sourceTooltipInfo: VisualTooltipDataItem[],
+        destTooltipInfo: VisualTooltipDataItem[]
     }
 }
