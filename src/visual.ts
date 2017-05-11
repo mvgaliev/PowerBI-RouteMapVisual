@@ -305,10 +305,22 @@ module powerbi.extensibility.visual {
             let thickness = thicknessOptions
                         ? settings.routes.minThickness + (direction.thicknessValue - thicknessOptions.minValue) * thicknessOptions.coeficient 
                         : settings.routes.defaultThickness;
-            
+
+            let pointyLine = this.pointyLine(pointFrom, pointTo, {
+                color: color,
+                weight: thickness,
+                trianglePane: "overlayPane"
+            });
+
+            pointyLine.on("redrawend", function() {
+                console.log("redrawend");
+                console.log(this);
+                this.bringToBack();
+            })
+
             let line = L.polyline([pointFrom, pointTo], {color: color, weight: thickness} );
             
-            return line;
+            return pointyLine;
         }
 
         public updateContainerViewports(viewport: IViewport) {
@@ -496,7 +508,7 @@ module powerbi.extensibility.visual {
                 color: settings.markers.getMarkerColor(),
                 fillColor:  settings.markers.getMarkerColor(),
                 fillOpacity: 1,
-                radius: settings.markers.radius
+                radius: settings.markers.radius                
             });
 
             return marker;
@@ -991,6 +1003,168 @@ module powerbi.extensibility.visual {
                     });
                 }
             });
+        }
+
+        private PointyLine = (L as any).FeatureGroup.extend({
+            options: {
+                trianglePane: 'markerPane',
+                redrawCallback: null
+            },
+
+            initialize(from, to, options) {
+                L.Util.setOptions(this, options);
+                this._setData(from, to);
+            },
+
+            onAdd: function (map) {
+                this._map = map;
+                this._redraw();                
+                
+                map.on('viewreset', this._reset, this);
+                map.on('zoomstart', this._deleteLayers, this);
+                map.on('zoomend', this._reset, this);
+            },
+
+            onRemove: function () {
+                this._deleteLayers();
+
+                this._map.off('viewreset', this._reset, this);
+                this._map.off('zoomstart', this._deleteLayers, this);
+                this._map.off('zoomend', this._reset, this);
+                this.off();
+            },
+
+            _setData: function (from, to) {
+                this._from = from;
+                this._to = to;            
+            },
+            
+            bringToBack() {
+                console.log("bringToBack");
+                for (let i in this._layers)
+                    if (this._layers.hasOwnProperty(i))
+                        if (typeof this._layers[i].bringToBack === "function") 
+                            this._layers[i].bringToBack();
+            },
+
+            _reset() {
+                this._redraw();
+            },
+
+            _redraw() {
+                if (!this._map) {
+                    return;
+                }
+                
+                this._deleteLayers();
+                this._layers = {};
+
+                let line = this._createPolyline(this._from, this._to);
+                this.addLayer(line);
+
+                let marker = this._createMarker(line);
+                this.addLayer(marker);
+                this._alignMarkerWithLine(marker, line);
+
+                this.fire('redrawend', this);                
+            },
+
+            _createPolyline(from: L.LatLng, to: L.LatLng): L.Polyline {
+                return L.polyline([from, to], this.options);                
+            },
+
+            _createMarker(fromLine: L.Polyline): any {
+                const arrowWidth = 15;
+                const arrowLengthPart = 0.2;
+                const arrowMaxLength = 40;
+
+                let lineLength = this._calculateLineLength(fromLine);
+                let width = arrowWidth;
+                let height = Math.min(lineLength * arrowLengthPart, arrowMaxLength);
+                
+                let svgrect = "<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><polygon x='0' y='0' points='20,0 0,40 40,40' fill='red' /></svg>";
+                let url = encodeURI("data:image/svg+xml," + svgrect).replace('#','%23');
+                let icon = L.icon({
+                    iconUrl: url,
+                    iconSize: [width, height],
+                    shadowSize: [50, 64],
+                    iconAnchor: [width/2, height],
+                    shadowAnchor: [4, 62],
+                    popupAnchor: [-3, -76]
+                });
+
+                let marker = L.marker(fromLine.getLatLngs()[0], {
+                    icon: icon,
+                    pane: this.options.trianglePane
+                });                
+                this._sourceMarker = marker;
+                
+                return marker;
+            },
+
+            _deleteLayers() {
+                for (var i in this._layers) {
+                    if (this._layers.hasOwnProperty(i)) {
+                        this._map.removeLayer(this._layers[i]);
+                    }
+                }
+
+                if (typeof this._sourceMarker !== 'undefined') {
+                    this._map.removeLayer(this._sourceMarker);
+                }
+            },
+
+            _calculateLineLength(line: L.Polyline) {
+                let linePxBounds: L.Bounds = (<any>line)._pxBounds;
+
+                let dx = linePxBounds.max.x - linePxBounds.min.x;
+                let dy = linePxBounds.max.y - linePxBounds.min.y;
+
+                return Math.sqrt(dx*dx + dy*dy);
+            },
+
+            _getUnitVector(line: L.Polyline, length?: number) {
+                let startPoint: L.Point = this._map.latLngToLayerPoint(line.getLatLngs()[0]);
+                let endPoint: L.Point = this._map.latLngToLayerPoint(line.getLatLngs()[1]);
+                
+                if (!length) {
+                    length = this._calculateLineLength(line);
+                }
+                
+                return [
+                    (endPoint.x - startPoint.x) * 1.0 / length,
+                    (endPoint.y - startPoint.y) * 1.0 / length
+                ];
+            },
+
+            _alignMarkerWithLine(marker: any, line: L.Polyline) {
+                const r2d = 180/Math.PI;
+                let unitVector = this._getUnitVector(line);
+                marker._icon.style[(<any>L.DomUtil).TRANSFORM + 'Origin'] = "center bottom";
+
+                let tan = 
+                    (Math.abs(unitVector[0]) > 0.00001 
+                        ? unitVector[1] / unitVector[0] 
+                        : unitVector[1] > 0
+                            ? Number.POSITIVE_INFINITY
+                            : Number.NEGATIVE_INFINITY);
+
+                let degrees = Math.atan(tan) * r2d + 90;
+
+                if ((tan > 0 && unitVector[1] < 0) || (tan < 0 && unitVector[0] < 0))
+                    degrees += 180;
+
+                let oldIE = ((<any>L.DomUtil).TRANSFORM === 'msTransform');
+                if(oldIE) {
+                   marker._icon.style[(<any>L.DomUtil).TRANSFORM] = 'rotate(' + degrees + 'deg)';
+                } else {
+                   marker._icon.style[(<any>L.DomUtil).TRANSFORM] += ' rotateZ(' + degrees + 'deg)';
+                }
+            }
+        });
+
+        private pointyLine(from: L.LatLng, to: L.LatLng, options: any) {
+            return new this.PointyLine(from, to, options);
         }
     }
 }
