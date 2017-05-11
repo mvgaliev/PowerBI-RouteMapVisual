@@ -805,16 +805,24 @@ module powerbi.extensibility.visual {
             let long = isDestinationPoint ? direction.fromToLatLng.toLatLng.lng : direction.fromToLatLng.fromLatLng.lng;
 
             this.setOnMarkerClickEvent(marker);
+            
+            let tooltipInfo = this.markersTooltipsMap[label].length > 0 ? Visual.removeDuplicates(this.markersTooltipsMap[label]) : null;
 
-            let tooltipInfo = this.markersTooltipsMap[label].length > 0 ? this.markersTooltipsMap[label] : null;            
-
-            return {                
+            return {
                 marker: marker,
                 arcs: [],
                 location: label,
                 tooltipInfo: tooltipInfo,
                 isSelected: false
             };
+        }
+
+        private static removeDuplicates(myArr) {
+            return myArr.filter((obj, pos, arr) => {
+                var a0 = arr.map(mapObj => mapObj["value"]).indexOf(obj["value"]) === pos;
+                var a1 = arr.map(mapObj => mapObj["displayName"]).indexOf(obj["displayName"]) === pos;
+                return a0 || a1;                       
+            });
         }
 
         private limitProperties(settings: RouteMapSettings) {
