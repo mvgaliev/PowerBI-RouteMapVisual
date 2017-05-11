@@ -43,7 +43,7 @@ module powerbi.extensibility.visual {
         [key: string]: RouteMapArc;
     }
 
-    export interface RouteMapMarker extends TooltipEnabledDataPoint {
+    export interface RouteMapMarker extends TooltipEnabledDataPoint {        
         marker: L.CircleMarker,
         location: string,
         arcs: RouteMapArc[],
@@ -91,8 +91,6 @@ module powerbi.extensibility.visual {
         thicknessValue: number,
         thicknessMin: number,
         thicknessMax: number,
-        tooltipInfo: VisualTooltipDataItem[],
-        sourceTooltipInfo: VisualTooltipDataItem[],
-        destTooltipInfo: VisualTooltipDataItem[]
+        tooltipInfo: VisualTooltipDataItem[]
     }
 }

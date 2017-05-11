@@ -54,6 +54,7 @@ module powerbi.extensibility.visual {
 
     const labelSelector = ".route-map-label";
     const labelClassName = "route-map-label";
+    const markerClassName: string = "route-map-marker";
     export class Visual implements IVisual {
 
         private routeMapDataView: RouteMapDataView;
@@ -66,6 +67,7 @@ module powerbi.extensibility.visual {
         private host: IVisualHost;
         private isFirstMultipleSelection: boolean = true;
         private tooltipServiceWrapper: ITooltipServiceWrapper;
+        private markersTooltipsMap: { [key: string]: VisualTooltipDataItem[] };
 
         private root: Selection<any>;
 
@@ -490,18 +492,13 @@ module powerbi.extensibility.visual {
             });
         }
 
-        private createCustomizableMarker(latLng: L.LatLng, settings: RouteMapSettings, isSource: boolean): L.CircleMarker {
-
-            let color = isSource ? "blue" : "green";
-
+        private createCustomizableMarker(latLng: L.LatLng, settings: RouteMapSettings): L.CircleMarker {
             let marker = L.circleMarker(latLng, {
-                // color: settings.markers.getMarkerColor(),
-                // fillColor:  settings.markers.getMarkerColor(),
-                color: color,
-                fillColor:  color,
+                color: settings.markers.getMarkerColor(),
+                fillColor:  settings.markers.getMarkerColor(),
                 fillOpacity: 1,
                 radius: settings.markers.radius,
-                className: "marker"
+                className: markerClassName
             });
 
             return marker;
@@ -549,7 +546,7 @@ module powerbi.extensibility.visual {
             let markersSelection: UpdateSelection<RouteMapMarker>;
 			let markersElements: Selection<RouteMapMarker>;
 
-			markersElements = this.root.select("g").selectAll(".leaflet-interactive.marker");
+			markersElements = this.root.select("g").selectAll("." + markerClassName);
 
             let array = [];
 
@@ -557,9 +554,7 @@ module powerbi.extensibility.visual {
                 array.push(this.routeMapDataView.markers[item]);
             }
 
-			markersSelection = markersElements.data(array.filter((marker) => {
-                return marker.tooltipInfo.length > 0;
-            }));
+			markersSelection = markersElements.data(array);
 
             return markersSelection;
         }
@@ -574,6 +569,7 @@ module powerbi.extensibility.visual {
 
         private parseDataViewToDirections(dataView: DataView): Direction[] {
             let directions: Direction[] = [];
+            let parsedMarkerTooltipsMap: {[key:string]:VisualTooltipDataItem[]} = {};
 
             let codesFrom: any[] = dataView.categorical.categories[1].values,
                 codesTo: any[] = dataView.categorical.categories[2].values,
@@ -599,7 +595,6 @@ module powerbi.extensibility.visual {
             let destTooltipColumns: DataViewValueColumn[] = [];
 
             for(var i in dataView.categorical.values) {
-                debugger;
                 let column = dataView.categorical.values[i];
                 if(column.source && column.source.roles["tooltips"]) {
                     tooltipColumns.push(column);
@@ -655,33 +650,12 @@ module powerbi.extensibility.visual {
             }
 
             markets.forEach((item: any, index: number) => {
-                debugger;
-                let tooltipInfo: VisualTooltipDataItem[] = [];
-                tooltipColumns.forEach((column) => {
-                    let format = ValueFormatter.getFormatStringByColumn(column.source, true),
-                    name = column.source.displayName,
-                    value = column.values[index] ? column.values[index] : "";
+                let tooltipInfo: VisualTooltipDataItem[] = Visual.GetTooltipInfo(tooltipColumns, index);
+                let sourceTooltipInfo: VisualTooltipDataItem[] = Visual.GetTooltipInfo(sourceTooltipColumns, index);
+                let destTooltipInfo: VisualTooltipDataItem[] = Visual.GetTooltipInfo(destTooltipColumns, index);
 
-                    tooltipInfo.push({displayName: name, value: ValueFormatter.format(value, format)});
-                });
-
-                let sourceTooltipInfo: VisualTooltipDataItem[] = [];
-                sourceTooltipColumns.forEach((column) => {
-                    let format = ValueFormatter.getFormatStringByColumn(column.source, true),
-                    name = column.source.displayName,
-                    value = column.values[index] ? column.values[index] : "";
-
-                    sourceTooltipInfo.push({displayName: name, value: ValueFormatter.format(value, format)});
-                });
-
-                let destTooltipInfo: VisualTooltipDataItem[] = [];
-                destTooltipColumns.forEach((column) => {
-                    let format = ValueFormatter.getFormatStringByColumn(column.source, true),
-                    name = column.source.displayName,
-                    value = column.values[index] ? column.values[index] : "";
-
-                    destTooltipInfo.push({displayName: name, value: ValueFormatter.format(value, format)});
-                });
+                parsedMarkerTooltipsMap[codesFrom[index]] = parsedMarkerTooltipsMap[codesFrom[index]] ? parsedMarkerTooltipsMap[codesFrom[index]].concat(sourceTooltipInfo) : sourceTooltipInfo;
+                parsedMarkerTooltipsMap[codesTo[index]] = parsedMarkerTooltipsMap[codesTo[index]] ? parsedMarkerTooltipsMap[codesTo[index]].concat(destTooltipInfo) : destTooltipInfo;
 
                 let fromToLatLng = this.getActualFromToLatLng(latsFrom[index], longsFrom[index], latsTo[index], longsTo[index]);
 
@@ -702,14 +676,25 @@ module powerbi.extensibility.visual {
                         thicknessValue: thicknessValues ? thicknessValues[index] : null,
                         thicknessMax: thicknessValuesMax ? thicknessValuesMax[index] : null,
                         thicknessMin: thicknessValuesMin ? thicknessValuesMin[index] : null,
-                        tooltipInfo: tooltipInfo,
-                        sourceTooltipInfo: sourceTooltipInfo,
-                        destTooltipInfo: destTooltipInfo
+                        tooltipInfo: tooltipInfo
                     });
                 }
             });
 
+            this.markersTooltipsMap = parsedMarkerTooltipsMap;
             return directions;
+        }
+
+        private static GetTooltipInfo(columns: DataViewValueColumn[], valueIndex: number): VisualTooltipDataItem[] {
+            let routeTooltipInfo: VisualTooltipDataItem[] = [];
+            columns.forEach((column) => {
+                let format = ValueFormatter.getFormatStringByColumn(column.source, true),
+                    name = column.source.displayName,
+                    value = column.values[valueIndex] ? column.values[valueIndex] : "";
+
+                routeTooltipInfo.push({ displayName: name, value: ValueFormatter.format(value, format) });
+            });
+            return routeTooltipInfo;
         }
 
         private getThicknessOptions(direction: Direction): ThicknessOptions {
@@ -811,8 +796,7 @@ module powerbi.extensibility.visual {
         }
 
         private createRouteMapMarker(direction: Direction, isDestinationPoint: boolean, latLng: L.LatLng, settings: RouteMapSettings): RouteMapMarker {
-
-            let marker = this.createCustomizableMarker(latLng, settings, !isDestinationPoint);
+            let marker = this.createCustomizableMarker(latLng, settings);
 
             let label = isDestinationPoint ? direction.locationTo : direction.locationFrom;
             this.setLabelToElement(label.toString(), marker);
@@ -822,13 +806,12 @@ module powerbi.extensibility.visual {
 
             this.setOnMarkerClickEvent(marker);
 
-            let tooltipInfo = direction.destTooltipInfo.concat(direction.sourceTooltipInfo);
-            debugger;
+            let tooltipInfo = this.markersTooltipsMap[label].length > 0 ? this.markersTooltipsMap[label] : null;            
 
-            return {
+            return {                
                 marker: marker,
                 arcs: [],
-                location: direction.locationFrom,
+                location: label,
                 tooltipInfo: tooltipInfo,
                 isSelected: false
             };
@@ -937,6 +920,7 @@ module powerbi.extensibility.visual {
 
                 let routeMapMarkerFrom: RouteMapMarker,
                     routeMapMarkerTo: RouteMapMarker;
+
 
                 if (!createdMarkers[keyFrom] && !isFromLngMinus360) {
                     let fromLatLng = direction.fromToLatLng.fromLatLng;
