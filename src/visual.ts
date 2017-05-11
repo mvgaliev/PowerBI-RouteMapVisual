@@ -805,7 +805,7 @@ module powerbi.extensibility.visual {
             let long = isDestinationPoint ? direction.fromToLatLng.toLatLng.lng : direction.fromToLatLng.fromLatLng.lng;
 
             this.setOnMarkerClickEvent(marker);
-            
+
             let tooltipInfo = this.markersTooltipsMap[label].length > 0 ? Visual.removeDuplicates(this.markersTooltipsMap[label]) : null;
 
             return {
@@ -819,9 +819,9 @@ module powerbi.extensibility.visual {
 
         private static removeDuplicates(myArr) {
             return myArr.filter((obj, pos, arr) => {
-                var a0 = arr.map(mapObj => mapObj["value"]).indexOf(obj["value"]) === pos;
-                var a1 = arr.map(mapObj => mapObj["displayName"]).indexOf(obj["displayName"]) === pos;
-                return a0 || a1;                       
+                var uniqueValue = arr.map(mapObj => mapObj["value"]).indexOf(obj["value"]) === pos;
+                var uniqueDisplayName = arr.map(mapObj => mapObj["displayName"]).indexOf(obj["displayName"]) === pos;
+                return uniqueValue || uniqueDisplayName;
             });
         }
 
