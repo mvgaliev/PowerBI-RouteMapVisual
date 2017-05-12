@@ -105,7 +105,8 @@ module powerbi.extensibility.visual {
                             arcColor: this.settings.routes.getArcColor(),
                             defaultThickness: this.settings.routes.defaultThickness,
                             minThickness: this.settings.routes.minThickness,     
-                            maxThickness: this.settings.routes.maxThickness               
+                            maxThickness: this.settings.routes.maxThickness,
+                            arrowThicknessCoef: this.settings.routes.arrowThicknessCoef
                         },
                         selector: null
                     });
@@ -312,7 +313,8 @@ module powerbi.extensibility.visual {
             let pointyLine = this.pointyLine(pointFrom, pointTo, {
                 color: color,
                 weight: thickness,
-                pane: "linesPane"
+                pane: "linesPane",
+                arrowWidthCoef: settings.routes.arrowThicknessCoef
             });
 
             let line = L.polyline([pointFrom, pointTo], {color: color, weight: thickness} );
@@ -818,7 +820,14 @@ module powerbi.extensibility.visual {
                 maxThickness = RouteMapRoutesSettings.minimumPossibleThickness;
             }
             
-            settings.routes.maxThickness = maxThickness;                     
+            settings.routes.maxThickness = maxThickness;
+            
+            let arrowThicknessCoef = settings.routes.arrowThicknessCoef;
+            if (arrowThicknessCoef < 1) {
+                arrowThicknessCoef = 1;
+            }
+
+            settings.routes.arrowThicknessCoef = arrowThicknessCoef;
         }
 
         public converter(dataView: DataView): RouteMapDataView {
@@ -1004,7 +1013,7 @@ module powerbi.extensibility.visual {
 
         private PointyLine = (L as any).FeatureGroup.extend({
             options: {
-                arrowWidth: 15,
+                arrowWidthCoef: 5,
                 arrowLengthPart: 0.4,
                 arrowMaxLength: 60
             },
@@ -1071,16 +1080,17 @@ module powerbi.extensibility.visual {
             },
 
             _createMarker(fromLine: L.Polyline): any {
-                const arrowWidth = this.options.arrowWidth;
+                const lineWidth = this.options.weight;
+                const arrowWidthCoef = this.options.arrowWidthCoef;
                 const arrowLengthPart = this.options.arrowLengthPart;
                 const arrowMaxLength = this.options.arrowMaxLength;
 
                 let lineLength = this._calculateLineLength(fromLine);
-                let width = arrowWidth;
+                let width = lineWidth * arrowWidthCoef;
                 let height = Math.min(lineLength * arrowLengthPart, arrowMaxLength);
                 
                 let svgrect = "<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><polygon x='0' y='0' points='20,0 0,40 40,40' fill='red' /></svg>";
-                let url = encodeURI("data:image/svg+xml," + svgrect).replace('#','%23');
+                let url = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAMAAAC7IEhfAAAAFVBMVEUAAAD/AAD/AAD/AAD/AAD/AAD///8EAs9/AAAABXRSTlMAOzxAv2OXhP0AAAB2SURBVHjajcyxDcAgEMBAEvj9V055TSTj2rr10/usu865+/bMvgNnziWIDBAZIDJAZIDIAJEBIgNEBogMEBkgMkBkgMgAkQEiA0QWiAwQWSAyQGSByACRBSIDRBaIDBBZILJAJDBIYJDAIoFBAosEBgksEhjkB1rQD+5nyedeAAAAAElFTkSuQmCC';
                 let icon = L.icon({
                     iconUrl: url,
                     iconSize: [width, height],
