@@ -310,7 +310,6 @@ module powerbi.extensibility.visual {
                         ? settings.routes.minThickness + (direction.thicknessValue - thicknessOptions.minValue) * thicknessOptions.coeficient 
                         : settings.routes.defaultThickness;
 
-            debugger;
             let pl = pointyLine(pointFrom, pointTo, {
                 color: color,
                 weight: thickness,
