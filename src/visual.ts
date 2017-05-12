@@ -536,7 +536,7 @@ module powerbi.extensibility.visual {
             let arcsSelection: UpdateSelection<RouteMapArc>;
 			let arcsElements: Selection<RouteMapArc>;
 
-			arcsElements = this.root.select("g").selectAll(".leaflet-interactive");
+			arcsElements = this.root.select(".leaflet-lines-pane").select("g").selectAll("path.leaflet-interactive");
 
             let array = [];
 
