@@ -168,19 +168,18 @@ module powerbi.extensibility.visual {
                 const arrowWidthCoef = this.options.arrowWidthCoef;
                 const arrowLengthPart = this.options.arrowLengthPart;
                 const arrowMaxLength = this.options.arrowMaxLength;
+                const color = this.options.color;
 
                 let lineLength = this._calculateLineLength(fromLine);
                 let width = lineWidth * arrowWidthCoef;
                 let height = Math.min(lineLength * arrowLengthPart, arrowMaxLength);
                 
-                let url = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAMAAAC7IEhfAAAAFVBMVEUAAAD/AAD/AAD/AAD/AAD/AAD///8EAs9/AAAABXRSTlMAOzxAv2OXhP0AAAB2SURBVHjajcyxDcAgEMBAEvj9V055TSTj2rr10/usu865+/bMvgNnziWIDBAZIDJAZIDIAJEBIgNEBogMEBkgMkBkgMgAkQEiA0QWiAwQWSAyQGSByACRBSIDRBaIDBBZILJAJDBIYJDAIoFBAosEBgksEhjkB1rQD+5nyedeAAAAAElFTkSuQmCC';
-                let icon = L.icon({
-                    iconUrl: url,
+                let icon = L.divIcon({
+                    html: `<div style='width: 0;height: 0;border-left: ${width/2}px solid transparent;border-right: ${width/2}px solid transparent;border-bottom: ${height}px solid ${color};'></div>`,
                     iconSize: [width, height],
-                    shadowSize: [50, 64],
                     iconAnchor: [width/2, height],
-                    shadowAnchor: [4, 62],
-                    popupAnchor: [-3, -76]
+                    popupAnchor: [-3, -76],
+                    className: ''
                 });
 
                 let marker = L.marker(fromLine.getLatLngs()[0], {
@@ -285,7 +284,7 @@ module powerbi.extensibility.visual {
                 } else {
                    marker._icon.style[(<any>L.DomUtil).TRANSFORM] += ' rotateZ(' + degrees + 'deg)';
                 }
-            }
+            }            
         });
 
         export function pointyLine(from: L.LatLng, to: L.LatLng, options: any) {
