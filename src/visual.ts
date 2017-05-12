@@ -1017,7 +1017,7 @@ module powerbi.extensibility.visual {
                 this._redraw();                
                 
                 map.on('viewreset', this._reset, this);
-                map.on('zoomstart', this._deleteLayers, this);
+                map.on('zoomstart', this._deleteMarker, this);
                 map.on('zoomend', this._reset, this);
             },
 
@@ -1025,7 +1025,7 @@ module powerbi.extensibility.visual {
                 this._deleteLayers();
 
                 this._map.off('viewreset', this._reset, this);
-                this._map.off('zoomstart', this._deleteLayers, this);
+                this._map.off('zoomstart', this._deleteMarker, this);
                 this._map.off('zoomend', this._reset, this);
                 this.off();
             },
@@ -1047,14 +1047,8 @@ module powerbi.extensibility.visual {
                 this._deleteLayers();
                 this._layers = {};
 
-                let line = this._createPolyline(this._from, this._to);
-                this.addLayer(line);
-
-                let marker = this._createMarker(line);
-                this.addLayer(marker);
-                this._alignMarkerWithLine(marker, line);
-
-                this.fire('redrawend', this);                
+                this._drawLine();
+                this._drawMarker();                
             },
 
             _createPolyline(from: L.LatLng, to: L.LatLng): L.Polyline {
@@ -1085,9 +1079,24 @@ module powerbi.extensibility.visual {
                     icon: icon,
                     pane: this.options.pane
                 });                
-                this._sourceMarker = marker;
-                
+
                 return marker;
+            },
+
+            _drawLine() {
+                let line = this._createPolyline(this._from, this._to);
+                this._polyline = line;
+                this.addLayer(line);
+            },
+
+            _drawMarker() {
+                if (!this._polyline)
+                    return;
+
+                let marker = this._createMarker(this._polyline);
+                this._sourceMarker = marker;
+                this.addLayer(marker);
+                this._alignMarkerWithLine(marker, this._polyline);
             },
 
             _deleteLayers() {
@@ -1100,6 +1109,13 @@ module powerbi.extensibility.visual {
                 if (typeof this._sourceMarker !== 'undefined') {
                     this._map.removeLayer(this._sourceMarker);
                 }
+            },
+
+            _deleteMarker() {
+                if (!this._sourceMarker)
+                    return;
+
+                this._map.removeLayer(this._sourceMarker);
             },
 
             _calculateLineLength(line: L.Polyline) {
