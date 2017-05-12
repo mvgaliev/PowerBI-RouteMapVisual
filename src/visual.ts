@@ -1004,10 +1004,13 @@ module powerbi.extensibility.visual {
 
         private PointyLine = (L as any).FeatureGroup.extend({
             options: {
-                redrawCallback: null
+                arrowWidth: 15,
+                arrowLengthPart: 0.4,
+                arrowMaxLength: 60
             },
 
             initialize(from, to, options) {
+                this._checkOptions();
                 L.Util.setOptions(this, options);
                 this._setData(from, to);
             },
@@ -1029,6 +1032,11 @@ module powerbi.extensibility.visual {
                 this._map.off('zoomstart', this._deleteMarker, this);
                 this._map.off('zoomend', this._reset, this);
                 this._map.off('moveend', this._reset, this);
+            },
+
+            _checkOptions() {
+                let lengthPart = this.options.arrowLengthPart;
+                this.options.arrowLengthPart = Math.max(0, Math.min(1, lengthPart));
             },
 
             _setData: function (from, to) {
@@ -1057,9 +1065,9 @@ module powerbi.extensibility.visual {
             },
 
             _createMarker(fromLine: L.Polyline): any {
-                const arrowWidth = 15;
-                const arrowLengthPart = 0.2;
-                const arrowMaxLength = 40;
+                const arrowWidth = this.options.arrowWidth;
+                const arrowLengthPart = this.options.arrowLengthPart;
+                const arrowMaxLength = this.options.arrowMaxLength;
 
                 let lineLength = this._calculateLineLength(fromLine);
                 let width = arrowWidth;
