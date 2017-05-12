@@ -1017,6 +1017,7 @@ module powerbi.extensibility.visual {
 
             onAdd: function (map) {
                 this._map = map;
+                this._renderer = map.getRenderer(this);
                 this._redraw();                
                 
                 map.on('viewreset', this._reset, this);
@@ -1032,6 +1033,11 @@ module powerbi.extensibility.visual {
                 this._map.off('zoomstart', this._deleteMarker, this);
                 this._map.off('zoomend', this._reset, this);
                 this._map.off('moveend', this._reset, this);
+            },
+
+            setStyle(style) {
+                L.Util.setOptions(this, style);
+                this._reset();
             },
 
             _checkOptions() {
@@ -1086,7 +1092,8 @@ module powerbi.extensibility.visual {
 
                 let marker = L.marker(fromLine.getLatLngs()[0], {
                     icon: icon,
-                    pane: this.options.pane
+                    pane: this.options.pane,
+                    opacity: this.options.opacity
                 });                
 
                 return marker;
@@ -1103,7 +1110,7 @@ module powerbi.extensibility.visual {
                     return;
 
                 let markerPoint = this._map.latLngToLayerPoint(this._polyline.getLatLngs()[0]);
-                let markerInView = this._polyline._renderer._bounds.intersects(L.bounds(markerPoint, markerPoint));
+                let markerInView = this._renderer._bounds.intersects(L.bounds(markerPoint, markerPoint));
 
                 if (!markerInView)
                     return;
