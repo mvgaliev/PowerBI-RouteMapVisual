@@ -12,6 +12,7 @@
     "src/visual.ts",
     "src/dataInterfaces.ts",
     "src/settings.ts",
+    "src/leaflet.d.ts",
     "node_modules/powerbi-visuals-utils-typeutils/lib/index.d.ts",
     "node_modules/powerbi-visuals-utils-svgutils/lib/index.d.ts",
     "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.d.ts",

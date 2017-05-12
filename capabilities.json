@@ -436,7 +436,13 @@
                     "type": {
                         "numeric": true
                     }
-                }
+                },
+                "arrowThicknessCoef": {
+                    "displayName": "Arrow thickness",
+                    "type": {
+                        "numeric": true
+                    }
+                }       
             }
         },
         "markers": {
