@@ -42,6 +42,7 @@ module powerbi.extensibility.visual {
         public defaultThickness: number = 3;
         public minThickness: number = 1;      
         public maxThickness: number = 5;
+        public arrowThicknessCoef: number = 5;
         
         public getArcColor() {
             return this.arcColor.solid.color;
