@@ -180,6 +180,9 @@ module powerbi.extensibility.visual {
                         maxZoom: 18
             }).addTo(this.map);
 
+            let linesPane = this.map.createPane('linesPane');
+            linesPane.style.zIndex = 350;
+
             this.routeMapDataView = {
                 markers: {},
                 arcs: {},
@@ -309,14 +312,8 @@ module powerbi.extensibility.visual {
             let pointyLine = this.pointyLine(pointFrom, pointTo, {
                 color: color,
                 weight: thickness,
-                trianglePane: "overlayPane"
+                pane: "linesPane"
             });
-
-            pointyLine.on("redrawend", function() {
-                console.log("redrawend");
-                console.log(this);
-                this.bringToBack();
-            })
 
             let line = L.polyline([pointFrom, pointTo], {color: color, weight: thickness} );
             
@@ -1007,7 +1004,6 @@ module powerbi.extensibility.visual {
 
         private PointyLine = (L as any).FeatureGroup.extend({
             options: {
-                trianglePane: 'markerPane',
                 redrawCallback: null
             },
 
@@ -1037,14 +1033,6 @@ module powerbi.extensibility.visual {
             _setData: function (from, to) {
                 this._from = from;
                 this._to = to;            
-            },
-            
-            bringToBack() {
-                console.log("bringToBack");
-                for (let i in this._layers)
-                    if (this._layers.hasOwnProperty(i))
-                        if (typeof this._layers[i].bringToBack === "function") 
-                            this._layers[i].bringToBack();
             },
 
             _reset() {
@@ -1095,7 +1083,7 @@ module powerbi.extensibility.visual {
 
                 let marker = L.marker(fromLine.getLatLngs()[0], {
                     icon: icon,
-                    pane: this.options.trianglePane
+                    pane: this.options.pane
                 });                
                 this._sourceMarker = marker;
                 
