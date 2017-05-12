@@ -4,7 +4,7 @@
             "displayName": "Market",
             "name": "market",
             "kind": "Grouping"
-        },	
+        },
 		{
             "displayName": "Location From",
             "name": "codeFrom",
@@ -30,7 +30,7 @@
             "displayName": "Location To",
             "name": "codeTo",
             "kind": "Grouping"
-        },	
+        },
 		{
             "displayName": "Latitude To",
             "name": "latTo",
@@ -131,6 +131,16 @@
             "displayName": "Tooltips",
             "name": "tooltips",
             "kind": "Measure"
+        },
+        {
+            "displayName": "Source Tooltips",
+            "name": "sourceTooltips",
+            "kind": "Measure"
+        },
+        {
+            "displayName": "Destination Tooltips",
+            "name": "destTooltips",
+            "kind": "Measure"
         }
     ],
     "dataViewMappings": [
@@ -139,75 +149,81 @@
                 {
                     "market": {
                         "min": 1,
-                        "max": 1 
+                        "max": 1
                     },
 					"codeFrom": {
                         "min": 1,
-                        "max": 1 
+                        "max": 1
                     },
 					"latFrom": {
                         "min": 1,
-                        "max": 1 
+                        "max": 1
                     },
 					"longFrom": {
                         "min": 1,
-                        "max": 1 
-                    },					
+                        "max": 1
+                    },
 					"codeTo": {
                         "min": 1,
-                        "max": 1 
+                        "max": 1
                     },
 					"latTo": {
                         "min": 1,
-                        "max": 1 
+                        "max": 1
                     },
 					"longTo": {
                         "min": 1,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValue": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMin1": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMax1": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMin2": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMax2": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMin3": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMax3": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "thicknessValue": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "thicknessMin": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "thicknessMax": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
-                    "tooltips": { 
-                        "min": 0 
-                    } 
+                    "tooltips": {
+                        "min": 0
+                    },
+                    "sourceTooltips": {
+                        "min": 0
+                    },
+                    "destTooltips": {
+                        "min": 0
+                    }
 				},
 				{
                     "market": {
@@ -221,7 +237,7 @@
                     },
 					"longFrom": {
                         "max": 1
-                    },					
+                    },
 					"codeTo": {
                         "max": 1
                     },
@@ -232,111 +248,123 @@
                         "max": 1
                     },
                     "stateValue": {
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMin1": {
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMax1": {
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMin2": {
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMax2": {
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMin3": {
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMax3": {
-                        "max": 1 
+                        "max": 1
                     },
                     "thicknessValue": {
-                        "max": 1 
+                        "max": 1
                     },
                     "thicknessMin": {
-                        "max": 1 
+                        "max": 1
                     },
                     "thicknessMax": {
-                        "max": 1 
+                        "max": 1
                     },
-                    "tooltips": { 
-                        "max": 0 
-                    } 
+                    "tooltips": {
+                        "max": 0
+                    },
+                    "sourceTooltips": {
+                        "min": 0
+                    },
+                    "destTooltips": {
+                        "min": 0
+                    }
 				},
                 {
                     "market": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
 					"codeFrom": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
 					"latFrom": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
 					"longFrom": {
                         "min": 0,
-                        "max": 1 
-                    },					
+                        "max": 1
+                    },
 					"codeTo": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
 					"latTo": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
 					"longTo": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValue": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMin1": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMax1": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMin2": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMax2": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMin3": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "stateValueMax3": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "thicknessValue": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "thicknessMin": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
                     "thicknessMax": {
                         "min": 0,
-                        "max": 1 
+                        "max": 1
                     },
-                    "tooltips": { 
-                        "min": 0 
-                    } 
+                    "tooltips": {
+                        "min": 0
+                    },
+                    "sourceTooltips": {
+                        "min": 0
+                    },
+                    "destTooltips": {
+                        "min": 0
+                    }
 				}
 			],
             "categorical": {
@@ -368,12 +396,14 @@
                             { "bind": { "to": "thicknessValue" } },
                             { "bind": { "to": "thicknessMin" } },
                             { "bind": { "to": "thicknessMax" } },
-                            { "for": { "in": "tooltips" } }
+                            { "for": { "in": "tooltips" } },
+                            { "for": { "in": "sourceTooltips" } },
+                            { "for": { "in": "destTooltips" } }
                         ]
                     }
-                }                
+                }
 			}
-        }                 					
+        }
     ],
     "objects": {
         "routes": {
@@ -412,7 +442,7 @@
                     "type": {
                         "numeric": true
                     }
-                }        
+                }       
             }
         },
         "markers": {
@@ -426,7 +456,7 @@
                                 "color": true
                             }
                         }
-                    }  
+                    }
                 },
                 "radius": {
                     "displayName": "Radius",
@@ -444,7 +474,7 @@
                         }
                     }
                 }
-            }            
+            }
         },
         "state1": {
             "displayName": "State 1",
@@ -472,6 +502,6 @@
                     "type": { "fill": { "solid": { "color": true } } }
                 }
             }
-        }       
+        }
     }
 }
