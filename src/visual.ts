@@ -105,7 +105,8 @@ module powerbi.extensibility.visual {
                             arcColor: this.settings.routes.getArcColor(),
                             defaultThickness: this.settings.routes.defaultThickness,
                             minThickness: this.settings.routes.minThickness,     
-                            maxThickness: this.settings.routes.maxThickness               
+                            maxThickness: this.settings.routes.maxThickness,
+                            arrowThicknessCoef: this.settings.routes.arrowThicknessCoef
                         },
                         selector: null
                     });
@@ -179,6 +180,9 @@ module powerbi.extensibility.visual {
                         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
                         maxZoom: 18
             }).addTo(this.map);
+
+            let linesPane = this.map.createPane('linesPane');
+            linesPane.style.zIndex = 350;
 
             this.routeMapDataView = {
                 markers: {},
@@ -305,10 +309,15 @@ module powerbi.extensibility.visual {
             let thickness = thicknessOptions
                         ? settings.routes.minThickness + (direction.thicknessValue - thicknessOptions.minValue) * thicknessOptions.coeficient 
                         : settings.routes.defaultThickness;
+
+            let pl = pointyLine(pointFrom, pointTo, {
+                color: color,
+                weight: thickness,
+                pane: "linesPane",
+                arrowWidthCoef: settings.routes.arrowThicknessCoef
+            });
             
-            let line = L.polyline([pointFrom, pointTo], {color: color, weight: thickness} );
-            
-            return line;
+            return pl;
         }
 
         public updateContainerViewports(viewport: IViewport) {
@@ -496,7 +505,7 @@ module powerbi.extensibility.visual {
                 color: settings.markers.getMarkerColor(),
                 fillColor:  settings.markers.getMarkerColor(),
                 fillOpacity: 1,
-                radius: settings.markers.radius
+                radius: settings.markers.radius                
             });
 
             return marker;
@@ -809,7 +818,14 @@ module powerbi.extensibility.visual {
                 maxThickness = RouteMapRoutesSettings.minimumPossibleThickness;
             }
             
-            settings.routes.maxThickness = maxThickness;                     
+            settings.routes.maxThickness = maxThickness;
+            
+            let arrowThicknessCoef = settings.routes.arrowThicknessCoef;
+            if (arrowThicknessCoef < 1) {
+                arrowThicknessCoef = 1;
+            }
+
+            settings.routes.arrowThicknessCoef = arrowThicknessCoef;
         }
 
         public converter(dataView: DataView): RouteMapDataView {
@@ -991,6 +1007,6 @@ module powerbi.extensibility.visual {
                     });
                 }
             });
-        }
+        }        
     }
 }

@@ -7,12 +7,12 @@
     "sourceMap": true,
     "out": "./.tmp/build/visual.js"
   },
-  "files": [
-    "typings/index.d.ts",
-    ".api/v1.3.0/PowerBI-visuals.d.ts",
+  "files": [    
+    ".api/v1.6.0/PowerBI-visuals.d.ts",
     "src/visual.ts",
     "src/dataInterfaces.ts",
     "src/settings.ts",
+    "src/leaflet.d.ts",
     "node_modules/powerbi-visuals-utils-typeutils/lib/index.d.ts",
     "node_modules/powerbi-visuals-utils-svgutils/lib/index.d.ts",
     "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.d.ts",
