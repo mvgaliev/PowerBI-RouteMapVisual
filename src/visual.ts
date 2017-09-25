@@ -171,14 +171,14 @@ module powerbi.extensibility.visual {
         }
 
         public initMap(): void {
-
             this.map = L.map('map').setView([33.9415839, -118.4435494], 3);                      
 
             //add map tile
-            var layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            var bing = new (<any>L).tileLayer.bing("Atvc-euh6EOj_iuhVUWBWjbMZkNotIXffpPvcxhhePnUbySlBIyvtV7xom291xnz"
+            /*var layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
                         maxZoom: 18
-            }).addTo(this.map);
+            }*/).addTo(this.map);
 
             this.routeMapDataView = {
                 markers: {},
