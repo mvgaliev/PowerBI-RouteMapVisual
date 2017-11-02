@@ -732,7 +732,7 @@ module powerbi.extensibility.visual {
         
         private createRouteMapArc(direction: Direction, 
                                        settings: RouteMapSettings, 
-                                       selectionCategoryColumn: DataViewCategoricalColumn): RouteMapArc {                                                                                             
+                                       selectionCategoryColumn: DataViewCategoryColumn): RouteMapArc {                                                                                             
 
             let locationFrom = direction.locationFrom,
                 locationTo = direction.locationTo;            
